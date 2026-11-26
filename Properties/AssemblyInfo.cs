@@ -6,11 +6,11 @@ using System.Windows;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 [assembly: AssemblyTitle("painter")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyDescription("Painter 画板 - AhoChat 系列的 Windows 画板端 | https://github.com/yuwenhui2020/Painter")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("Painter")]
+[assembly: AssemblyCompany("yuwenhui2020")]
 [assembly: AssemblyProduct("Painter")]
-[assembly: AssemblyCopyright("Copyright © Painter 2023")]
+[assembly: AssemblyCopyright("Copyright © yuwenhui2020 2026")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 

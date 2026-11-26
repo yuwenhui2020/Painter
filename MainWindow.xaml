@@ -782,6 +782,50 @@
                                 </ItemsControl>
                             </ui:SimpleStackPanel>
                         </GroupBox>
+                        <GroupBox Header="项目信息">
+                            <ui:SimpleStackPanel Spacing="6">
+                                <TextBlock FontSize="14" TextWrapping="Wrap"
+                                           Text="Painter 画板是 AhoChat 系列的 Windows 画板端，可搭配 AhoChatA 使用。"/>
+                                <TextBlock FontSize="14">
+                                    <Run Text="作者："/>
+                                    <Hyperlink Foreground="{DynamicResource FluentAccentFillBrush}"
+                                               NavigateUri="{x:Static h:ProjectInfo.AuthorUri}"
+                                               RequestNavigate="Hyperlink_RequestNavigate"><Run Text="{x:Static h:ProjectInfo.Author}"/></Hyperlink>
+                                </TextBlock>
+                                <TextBlock FontSize="14">
+                                    <Run Text="版本："/>
+                                    <Run Text="{x:Static h:ProjectInfo.VersionText}"/>
+                                </TextBlock>
+                                <TextBlock FontSize="14">
+                                    <Hyperlink Foreground="{DynamicResource FluentAccentFillBrush}"
+                                               NavigateUri="{x:Static h:ProjectInfo.ProjectUri}"
+                                               RequestNavigate="Hyperlink_RequestNavigate"><Run Text="项目主页 / 源码"/></Hyperlink>
+                                </TextBlock>
+                                <TextBlock FontSize="14">
+                                    <Hyperlink Foreground="{DynamicResource FluentAccentFillBrush}"
+                                               NavigateUri="{x:Static h:ProjectInfo.ReleasesUri}"
+                                               RequestNavigate="Hyperlink_RequestNavigate"><Run Text="更新记录（Releases）"/></Hyperlink>
+                                </TextBlock>
+                                <TextBlock FontSize="14">
+                                    <Hyperlink Foreground="{DynamicResource FluentAccentFillBrush}"
+                                               NavigateUri="{x:Static h:ProjectInfo.IssuesUri}"
+                                               RequestNavigate="Hyperlink_RequestNavigate"><Run Text="问题反馈（Issues）"/></Hyperlink>
+                                </TextBlock>
+                                <TextBlock FontSize="14">
+                                    <Hyperlink Foreground="{DynamicResource FluentAccentFillBrush}"
+                                               NavigateUri="{x:Static h:ProjectInfo.ReadmeUri}"
+                                               RequestNavigate="Hyperlink_RequestNavigate"><Run Text="使用说明（README）"/></Hyperlink>
+                                </TextBlock>
+                                <TextBlock FontSize="14">
+                                    <Hyperlink Foreground="{DynamicResource FluentAccentFillBrush}"
+                                               NavigateUri="{x:Static h:ProjectInfo.CompanionUri}"
+                                               RequestNavigate="Hyperlink_RequestNavigate"><Run Text="搭配使用：AhoChatA"/></Hyperlink>
+                                </TextBlock>
+                                <TextBlock FontSize="12" TextWrapping="Wrap"
+                                           Foreground="{DynamicResource FluentTextSecondaryBrush}"
+                                           Text="点击链接会用系统默认浏览器打开 GitHub；反馈问题时请附上上面的版本号。"/>
+                            </ui:SimpleStackPanel>
+                        </GroupBox>
                     </StackPanel>
                 </ui:ScrollViewerEx>
                 <Grid Background="#FFF3F3F3" Margin="10,0,10,0" Height="60" VerticalAlignment="Top">
