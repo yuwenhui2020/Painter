@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>图片上传 / 分享 · Painter</title>
+  <link rel="stylesheet" href="/share/share.css" />
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>图片上传 / 分享</h1>
+    <input id="code" type="password" placeholder="访问密码" title="若设置了访问密码请填写" autocomplete="off"
+           style="width:130px;padding:7px 10px;border-radius:9px;border:1px solid rgba(255,255,255,.18);background:rgba(0,0,0,.22);color:inherit;outline:none" />
+    <span id="status" class="status">连接中…</span>
+    <a href="/">功能导航</a>
+  </header>
+
+  <div class="mode">
+    <span id="modeBadge" class="badge">内置白板模式</span>
+    <span class="note" id="modeNote">上传的图片会成为内置白板的一页（可切换白色底色），一页显示一张。</span>
+  </div>
+
+  <section>
+    <div class="sec-head"><h2>上传图片</h2><span class="count" id="uploadCount">0 个文件</span></div>
+    <div class="row">
+      <button id="pick" class="primary">选择图片（可多选）</button>
+      <input id="file" type="file" accept="image/*" multiple />
+      <button id="clearPpt" class="danger ghost" title="清空 PPT 放映模式下上传的全部图片">清空放映图片</button>
+    </div>
+    <p class="hint">选好后自动逐张上传。普通模式：一页一张，翻白板页即翻图，可双指旋转 / 缩放 / 平移（图片与墨迹一起变换）。PPT 放映模式：图片直接叠加在当前屏幕上，随换页显隐，并自动保存到墨迹的同一文件夹。</p>
+    <ul class="list" id="transferList"></ul>
+  </section>
+
+  <section id="pptSection">
+    <div class="sec-head">
+      <h2>放映图片显隐控制</h2>
+      <span class="count" id="pptCount">0 张</span>
+    </div>
+    <div class="row" style="margin-bottom:10px">
+      <button id="showAll" class="small">全部显示</button>
+      <button id="hideAll" class="small">全部隐藏</button>
+    </div>
+    <ul class="list" id="pptList"></ul>
+    <p class="hint">网页端可随时决定每张图片的显示 / 隐藏时机。图片按上传时所在的幻灯片页码绑定：换页后自动隐藏，翻回该页会重新显示。</p>
+  </section>
+
+  <section>
+    <div class="sec-head"><h2>内置白板控制</h2><span class="count" id="wbCount">0 / 0</span></div>
+    <div class="row">
+      <button data-act="prev" class="small">⟨ 上一张</button>
+      <button data-act="next" class="small">下一张 ⟩</button>
+      <button data-act="zoomin" class="small">＋ 放大</button>
+      <button data-act="zoomout" class="small">－ 缩小</button>
+      <button data-act="rotl" class="small">⟲ 左旋 15°</button>
+      <button data-act="rotr" class="small">⟳ 右旋 15°</button>
+      <button data-act="reset" class="small">重置视角</button>
+    </div>
+    <p class="hint">旋转 / 缩放 / 平移会把同一变换同时作用于图片与墨迹，二者相对位置保持不变。</p>
+    <div class="preview"><img id="cur" alt="" style="display:none" /><span id="empty" class="empty">尚未选择 / 上传图片</span></div>
+    <div class="thumbs" id="thumbs"></div>
+  </section>
+
+  <footer>
+    入口：<code>/share</code> · 屏幕显示与控制：<code>/remotedesk</code> · 导航：<code>/</code><br />
+    如设置了访问密码，请在地址后加 <code>?code=你的密码</code>。
+  </footer>
+</div>
+<script src="/share/share.js"></script>
+</body>
+</html>

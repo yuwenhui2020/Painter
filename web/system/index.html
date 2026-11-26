@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>系统控制 · Painter</title>
+  <style>
+    :root { color-scheme: light dark; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; min-height: 100vh; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif;
+      background: radial-gradient(1200px 700px at 12% -10%, #3b82f6 0%, transparent 55%),
+                  radial-gradient(1000px 700px at 100% 100%, #8b5cf6 0%, transparent 55%),
+                  #0f1420;
+      color: #eef2ff; display: flex; align-items: center; justify-content: center; padding: 28px 18px;
+    }
+    .wrap { width: 100%; max-width: 460px; }
+    .head { margin-bottom: 22px; text-align: center; }
+    h1 { margin: 0 0 6px; font-size: clamp(24px, 5vw, 32px); font-weight: 700; }
+    .sub { margin: 0; opacity: .72; font-size: 13px; line-height: 1.7; }
+    .back { display: inline-block; margin-bottom: 18px; color: #8ab4f8; text-decoration: none; font-size: 13px; }
+    .card {
+      background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.14);
+      border-radius: 18px; padding: 24px; backdrop-filter: blur(10px);
+    }
+    .section { margin-bottom: 24px; }
+    .section:last-child { margin-bottom: 0; }
+    .label { font-size: 13px; opacity: .8; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+    .label .dot { width: 7px; height: 7px; border-radius: 50%; background: #60a5fa; }
+    .btn {
+      border: 1px solid rgba(255,255,255,.16); background: rgba(255,255,255,.08); color: inherit;
+      padding: 14px 18px; border-radius: 12px; font-size: 15px; cursor: pointer; transition: .15s; width: 100%;
+    }
+    .btn:hover { background: rgba(255,255,255,.16); border-color: rgba(147,197,253,.7); }
+    .btn:active { transform: scale(.98); }
+    .btn.accent { background: linear-gradient(135deg,#3b82f6,#8b5cf6); border: none; font-weight: 600; }
+    .volrow { display: flex; align-items: center; gap: 12px; }
+    .volrow .step { flex: 0 0 48px; width: 48px; padding: 12px 0; font-size: 18px; }
+    input[type=range] { flex: 1; accent-color: #8b5cf6; height: 6px; }
+    .volval { flex: 0 0 52px; text-align: right; font: 16px/1 ui-monospace, Consolas, monospace; }
+    .pill { display: inline-block; font: 12px/1.4 ui-monospace, Consolas, monospace; padding: 4px 9px;
+            border-radius: 7px; background: rgba(96,165,250,.18); color: #bfdbfe; margin-left: 8px; }
+    .status { margin-top: 16px; font-size: 12px; opacity: .6; min-height: 18px; text-align: center; }
+    .muted-on { background: rgba(248,113,113,.22) !important; color: #fecaca !important; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <a class="back" href="/">返回功能导航</a>
+    <div class="head">
+      <h1>系统控制</h1>
+      <p class="sub">暂停 / 恢复其它正在播放的媒体，实时调节系统主音量与静音。<br/>适合讲课中一键静音背景音乐或视频。</p>
+    </div>
+
+    <div class="card">
+      <div class="section">
+        <div class="label"><span class="dot"></span>媒体播放 <span class="pill" id="mediaState">—</span></div>
+        <button class="btn accent" id="btnPause">⏯ 播放 / 暂停 媒体</button>
+      </div>
+
+      <div class="section">
+        <div class="label"><span class="dot"></span>系统主音量</div>
+        <div class="volrow">
+          <button class="btn step" id="btnDown">−</button>
+          <input type="range" id="vol" min="0" max="100" step="1" value="50" />
+          <button class="btn step" id="btnUp">+</button>
+          <div class="volval" id="volVal">50%</div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="label"><span class="dot"></span>静音</div>
+        <button class="btn" id="btnMute">切换静音</button>
+      </div>
+
+      <div class="status" id="status">连接中…</div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      var code = new URLSearchParams(location.search).get('code') || '';
+      var $ = function (id) { return document.getElementById(id); };
+
+      function api(action, extra, onok) {
+        var url = '/api/system?action=' + encodeURIComponent(action)
+                + (extra ? '&' + extra : '')
+                + (code ? '&code=' + encodeURIComponent(code) : '');
+        fetch(url, { method: 'GET', cache: 'no-store' })
+          .then(function (r) { return r.json(); })
+          .then(function (j) {
+            if (j && j.ok === false) { setStatus('操作失败（音频接口不可用）'); return; }
+            if (onok) onok(j);
+          })
+          .catch(function () { setStatus('请求失败，请确认画板 Web 端已开启'); });
+      }
+
+      function setStatus(t) { $('status').textContent = t; }
+
+      function applyState(j) {
+        if (!j) return;
+        if (j.volume != null && j.volume >= 0) {
+          $('vol').value = j.volume;
+          $('volVal').textContent = j.volume + '%';
+        }
+        var muteBtn = $('btnMute');
+        if (j.muted) { muteBtn.classList.add('muted-on'); muteBtn.textContent = '已静音（点击取消）'; }
+        else { muteBtn.classList.remove('muted-on'); muteBtn.textContent = '切换静音'; }
+      }
+
+      $('btnPause').onclick = function () {
+        api('pause', '', function () { setStatus('已发送播放 / 暂停指令'); });
+      };
+      $('btnMute').onclick = function () {
+        api('mute', '', function (j) { applyState(j); setStatus('已切换静音'); });
+      };
+      $('btnUp').onclick = function () { api('volup', '', applyState); };
+      $('btnDown').onclick = function () { api('voldown', '', applyState); };
+      $('vol').oninput = function () {
+        var val = $('vol').value;
+        $('volVal').textContent = val + '%';
+      };
+      $('vol').onchange = function () {
+        var val = $('vol').value;
+        api('vol', 'v=' + val, function (j) { applyState(j); setStatus('音量已设为 ' + val + '%'); });
+      };
+
+      // 进入页面先取一次当前状态
+      api('get', '', function (j) {
+        applyState(j);
+        setStatus(j && j.volume >= 0 ? '已连接' : '音频接口不可用（将改用硬件音量键）');
+      });
+    })();
+  </script>
+</body>
+</html>

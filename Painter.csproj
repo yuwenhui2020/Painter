@@ -1,0 +1,273 @@
+<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<!-- 运行时门槛压到依赖允许的最低版本：Win10/11 自带 .NET Framework 4.8（向下兼容
+		     4.0~4.7.2 应用），Win7/8.1 上装过任意 4.6.2+ 即可直接启动，都不再需要单独
+		     安装 4.7.2。SkiaSharp 2.88.8 / System.Text.Json 8 / Vortice 2.4.2 的
+		     netstandard2.0 资产最低要求 net462，已无法再降。
+		     注意 SkiaSharp 特意选 2.88.8 而非 3.x：3.x 原生库依赖 Win10 独有的
+		     d3d12.dll，Win7 上会报缺 DLL，详见下方 PackageReference 注释。 -->
+		<TargetFramework>net462</TargetFramework>
+			<!-- 保留全部平台：ARM 打包项目需要 win-arm64 运行时资产，win 用于无 RID 的普通构建。
+			     注意 PlatformTarget 固定为 x86（墨迹识别的 x86-only 依赖），因此**不要**在这里
+			     选 win-x64 —— SDK 会要求 RID 与 PlatformTarget 一致并报 NETSDK1093。
+			     桌面版发布请用 FolderProfile.pubxml（已配为 win-x86）。 -->
+		<RuntimeIdentifiers>win;win-x86;win-x64;win-arm64;win7;win7-x86;win7-x64</RuntimeIdentifiers>
+		<OutputType>WinExe</OutputType>
+		<GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+		<UseWindowsForms>true</UseWindowsForms>
+		<UseWPF>true</UseWPF>
+		<ImportWindowsDesktopTargets>true</ImportWindowsDesktopTargets>
+		<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+		<ApplicationIcon>Resources\Painter.ico</ApplicationIcon>
+		<!-- 局域网远控 / Web 控制台 / PPT 放映控制等源码已直接并入本项目（不再有独立类库工程），
+		     因此这里不需要 ProjectReference，也不必为输出文件另取名称。 -->
+		<AssemblyName>painter</AssemblyName>
+		<RootNamespace>Painter</RootNamespace>
+		<!-- 并入的原代码使用了 `string?` / `object?` 注解与较新的语法；
+		     net462 下不启用可空上下文，仅把相关警告屏蔽掉。 -->
+		<LangVersion>latest</LangVersion>
+		<ImplicitUsings>disable</ImplicitUsings>
+		<Nullable>disable</Nullable>
+		<NoWarn>$(NoWarn);CS8632;CS0618;SYSLIB0014;NU1701</NoWarn>
+		<AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+		<GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
+		<!-- 即便宿主被误判为 MSIL 而引用到 x86 程序集，也将 MSB3270 降级为消息（不阻断生成） -->
+		<MSBuildWarningsAsMessages>MSB3270</MSBuildWarningsAsMessages>
+		<ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>None</ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>
+	</PropertyGroup>
+
+	<!-- ===== 架构：全项目唯一权威设置（其他任何 PropertyGroup 都不要再设 PlatformTarget）=====
+	     必须是 32 位（x86）：IACore.dll / IAWinFX.dll / IALoader.dll / Microsoft.Ink.dll
+	     （墨迹识别）全部是 x86-only（实测 PE machine=0x14C），64 位进程加载它们直接抛
+	     BadImageFormatException。经实测确认 Helpers/InkRecognizeHelper.cs 与 MainWindow.xaml.cs
+	     中确实在用 AnalysisAlternate / InkDrawingNode 等类型，墨迹识别功能是活的，不可移除。
+	     且 32BITREQUIRED 比 Prefer32Bit 更可靠 —— 后者只在"64 位系统上"才生效，
+	     32 位系统上本来就是 32 位，而 x86 是无条件 32 位。
+	     选 x86 而非 AnyCPU：AnyCPU 会让本项目被判定为 MSIL，从而对 x86-only 的
+	     IAWinFX.dll 报 MSB3270（主项目自身出现架构警告）。
+	     RuntimeIdentifiers 只列 win-x86：若同时列出 win-x64，VS 选择该 RID 时会报
+	     NETSDK1093「RuntimeIdentifier 平台 win-x64 和 PlatformTarget x86 必须兼容」。
+	     注意：x86 进程在 64 位 Windows 上通过 WOW64 正常运行，win-x86 这个 RID 面向的
+	     就是 64 位系统，无需改成 x64。
+	     并入的原代码同样按 x86 编译：其中用到的 Vortice / SkiaSharp 原生库随
+	     SkiaSharp.NativeAssets.Win32 等包一起提供，位数由宿主进程统一决定。 -->
+	<PropertyGroup>
+		<PlatformTarget>x86</PlatformTarget>
+	</PropertyGroup>
+
+	<!--ClickOnce Stuff-->
+	<PropertyGroup>
+		<IsWebBootstrapper>false</IsWebBootstrapper>
+		<PublishUrl>publish\</PublishUrl>
+		<Install>true</Install>
+		<InstallFrom>Disk</InstallFrom>
+		<UpdateEnabled>false</UpdateEnabled>
+		<UpdateMode>Foreground</UpdateMode>
+		<UpdateInterval>7</UpdateInterval>
+		<UpdateIntervalUnits>Days</UpdateIntervalUnits>
+		<UpdatePeriodically>false</UpdatePeriodically>
+		<UpdateRequired>false</UpdateRequired>
+		<MapFileExtensions>true</MapFileExtensions>
+		<ApplicationRevision>2</ApplicationRevision>
+		<ApplicationVersion>2.0.2.%2a</ApplicationVersion>
+		<UseApplicationTrust>false</UseApplicationTrust>
+		<BootstrapperEnabled>false</BootstrapperEnabled>
+		<Platforms>AnyCPU;x86;x64;ARM64</Platforms>
+		<ApplicationManifest>app.manifest</ApplicationManifest>
+		<!-- 入口改为 Program.Main：需在 WPF 初始化前先分派托盘 / 远程桌面 / Web 服务的独立模式 -->
+		<StartupObject>Painter.Program</StartupObject>
+		<RunAnalyzersDuringBuild>True</RunAnalyzersDuringBuild>
+
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+		<DebugType>none</DebugType>
+		<!-- 强制 x86：本项目依赖 IACore.dll 等 x86-only 程序集；
+		     选 AnyCPU 会变成 MSIL，与这些引用冲突并报架构不匹配。 -->
+		<PlatformTarget>x86</PlatformTarget>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+		<DebugType>none</DebugType>
+		<PlatformTarget>x86</PlatformTarget>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x86'">
+	  <DebugType>none</DebugType>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+	  <DebugType>none</DebugType>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">
+	  <DebugType>none</DebugType>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x86'">
+	  <DebugType>none</DebugType>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+	  <DebugType>none</DebugType>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">
+	  <DebugType>none</DebugType>
+	</PropertyGroup>
+	
+	
+	<!--WinRT Reference (this is not needed so comment it)-->
+	<!--<PropertyGroup>
+		<CsWinRTEmbedded>true</CsWinRTEmbedded>
+		<CsWinRTWindowsMetadata>10.0.18362.0</CsWinRTWindowsMetadata>
+		<CsWinRTIncludes>
+			Windows.ApplicationModel;
+			Windows.ApplicationModel.Package;
+		</CsWinRTIncludes>
+		<CsWinRTExcludes>
+			Windows.Foundation.Diagnostics;
+			Windows.Foundation.PropertyType;
+		</CsWinRTExcludes>
+	</PropertyGroup>-->
+	
+
+	<ItemGroup>
+		<!-- 墨迹识别依赖（x86-only）：AnalysisAlternate / InkDrawingNode 等类型在
+		     Helpers/InkRecognizeHelper.cs 与 MainWindow.xaml.cs 中实际使用，
+		     是本项目必须保持 x86 的原因。 -->
+		<Reference Include="IACore">
+			<HintPath>.\IACore.dll</HintPath>
+		</Reference>
+		<Reference Include="IALoader">
+			<HintPath>.\IALoader.dll</HintPath>
+		</Reference>
+		<Reference Include="IAWinFX">
+			<HintPath>.\IAWinFX.dll</HintPath>
+		</Reference>
+		<Reference Include="netstandard" />
+		<Reference Include="Windows">
+			<HintPath>Windows.WinMD</HintPath>
+			<IsWinMDFile>true</IsWinMDFile>
+		</Reference>
+		<Reference Include="Windows.Foundation.UniversalApiContract">
+			<HintPath>Windows.Foundation.UniversalApiContract.winmd</HintPath>
+			<IsWinMDFile>true</IsWinMDFile>
+		</Reference>
+	</ItemGroup>
+	<ItemGroup>
+		<!-- .NET Framework 框架程序集：net462 的默认引用集里不含以下四个，
+		     并入的桌面/网络模块（服务控制、HTTP 客户端、编码等）需要它们。 -->
+		<Reference Include="System.Net.Http" />
+		<Reference Include="System.Security" />
+		<Reference Include="System.ServiceProcess" />
+		<Reference Include="System.Web" />
+	</ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="iNKORE.UI.WPF.Modern">
+			<Version>0.9.25.1</Version>
+		</PackageReference>
+		<PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
+		<PackageReference Include="Microsoft.Office.Interop.PowerPoint">
+			<Version>15.0.4420.1018</Version>
+		</PackageReference>
+		<PackageReference Include="Microsoft.VisualBasic" Version="10.3.0" />
+		<PackageReference Include="MicrosoftOfficeCore">
+			<Version>15.0.0</Version>
+		</PackageReference>
+	</ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="Newtonsoft.Json">
+			<Version>13.0.3</Version>
+		</PackageReference>
+	</ItemGroup>
+	<!-- 并入的桌面模块依赖：屏幕采集（DXGI/D3D11）、编码、音频、JSON、通道 -->
+	<ItemGroup>
+		<PackageReference Include="Concentus" Version="2.2.2" />
+		<!-- 不引用 NAudio 元包：它会拉入 NAudio.WinForms，而该子包 2.x 起只支持 net472，
+		     会把整个程序钉死在「必须装 4.7.2」。本程序实际只用到 Core / Wasapi 两个子包里的
+		     WaveFormat、BufferedWaveProvider、IWavePlayer、WaveInEventArgs、
+		     WasapiOut、WasapiLoopbackCapture，直接引用子包即可，功能完全一致。 -->
+		<PackageReference Include="NAudio.Core" Version="2.0.1" />
+		<PackageReference Include="NAudio.Wasapi" Version="2.0.1" />
+		<!-- Win7 兼容：SkiaSharp 固定在 2.88.x。3.x 的 libSkiaSharp.dll 硬性依赖
+		     d3d12.dll 与 D3DCOMPILER_47.dll（Win10 独有 / Win7 默认缺失），
+		     在 Win7 上启动即报“缺少多个 DLL”；2.88.8 的原生库只依赖 Win7 自带的
+		     FONTSUB/KERNEL32/USER32/ole32，且本项目所用的 JPEG 编解码 API 两版一致。 -->
+		<PackageReference Include="SkiaSharp" Version="2.88.8" />
+		<PackageReference Include="SkiaSharp.NativeAssets.Win32" Version="2.88.8" />
+		<!-- net462 需要下列 netstandard2.0 兼容包来提供 net8 内置的 API -->
+		<PackageReference Include="System.Memory" Version="4.5.5" />
+		<PackageReference Include="System.Text.Json" Version="8.0.5" />
+		<PackageReference Include="System.Threading.Channels" Version="8.0.0" />
+		<!-- Vortice 3.x 仅支持 net8.0+，net462 必须降到支持 netstandard2.0 的 2.4.2 -->
+		<PackageReference Include="Vortice.DXGI" Version="2.4.2" />
+		<PackageReference Include="Vortice.Direct3D11" Version="2.4.2" />
+	</ItemGroup>
+	<ItemGroup>
+		<COMReference Include="IWshRuntimeLibrary">
+			<Guid>{F935DC20-1CF0-11D0-ADB9-00C04FD58A0B}</Guid>
+			<VersionMajor>1</VersionMajor>
+			<VersionMinor>0</VersionMinor>
+			<Lcid>0</Lcid>
+			<WrapperTool>tlbimp</WrapperTool>
+			<Isolated>False</Isolated>
+			<EmbedInteropTypes>True</EmbedInteropTypes>
+		</COMReference>
+		<COMReference Include="stdole">
+			<Guid>{00020430-0000-0000-C000-000000000046}</Guid>
+			<VersionMajor>2</VersionMajor>
+			<VersionMinor>0</VersionMinor>
+			<Lcid>0</Lcid>
+			<WrapperTool>primary</WrapperTool>
+			<Isolated>False</Isolated>
+			<EmbedInteropTypes>True</EmbedInteropTypes>
+		</COMReference>
+		<COMReference Include="VBIDE">
+			<Guid>{0002E157-0000-0000-C000-000000000046}</Guid>
+			<VersionMajor>5</VersionMajor>
+			<VersionMinor>3</VersionMinor>
+			<Lcid>0</Lcid>
+			<WrapperTool>primary</WrapperTool>
+			<Isolated>False</Isolated>
+			<EmbedInteropTypes>True</EmbedInteropTypes>
+		</COMReference>
+	</ItemGroup>
+	<ItemGroup>
+		<WCFMetadata Include="Connected Services\" />
+	</ItemGroup>
+	<ItemGroup>
+		<Resource Include="Resources\Painter.ico" />
+	</ItemGroup>
+	<ItemGroup>
+		<Resource Include="Resources\logo.png" />
+		<Resource Include="Resources\text.png" />
+	</ItemGroup>
+	<ItemGroup>
+		<Resource Include="Resources\textCN.png" />
+	</ItemGroup>
+	<ItemGroup>
+		<Resource Include="Resources\logo2.png" />
+	</ItemGroup>
+	<!-- Web 控制台静态资源与采集帧缓存随主程序一同输出到运行目录 -->
+	<ItemGroup>
+		<None Remove="frame.bin" />
+		<Content Include="frame.bin">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Include="web\**\*">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<Link>web\%(RecursiveDir)%(Filename)%(Extension)</Link>
+		</Content>
+	</ItemGroup>
+	<!-- 托盘与各窗体标题栏图标：以固定逻辑名内嵌，由 Desk/AppIcon.cs 运行时读取 -->
+	<ItemGroup>
+		<EmbeddedResource Include="ico.ico" LogicalName="Painter.App.ico" />
+	</ItemGroup>
+	<!-- 刻意不声明 BootstrapperPackage(.NETFramework,Version=v4.7.2)：
+	     它会让 ClickOnce / 安装包把 4.7.2 当作必备前置组件去下载安装，
+	     而目标机自带的 4.8 或任意 4.6.2+ 本来就能直接运行本程序。 -->
+	<!-- 强制 x86：Visual Studio 会把解决方案平台（Any CPU / x64 等）作为全局属性传入，
+	     Windows Desktop SDK 据此重新推导 PlatformTarget，可能覆盖上面的显式 x86，
+	     使本项目被编译为 MSIL，从而对 x86-only 的 IAWinFX.dll 报 MSB3270。
+	     此处在本项目自身编译（无 RuntimeIdentifier，即普通 Debug/Release 构建）时、
+	     于引用解析与编译前再次把 PlatformTarget 钉死为 x86。
+	     打包期带 RID 的构建（ARM64 等）跳过，以免与 RuntimeIdentifier 冲突触发 NETSDK1093。 -->
+	<Target Name="ForceHostX86" BeforeTargets="ResolveAssemblyReferences;CoreCompile" Condition="'$(RuntimeIdentifier)'==''">
+		<PropertyGroup>
+			<PlatformTarget>x86</PlatformTarget>
+		</PropertyGroup>
+	</Target>
+</Project>

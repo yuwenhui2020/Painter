@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <title>图片展示 · 手机遥控</title>
+  <link rel="stylesheet" href="/show/show.css" />
+</head>
+<body>
+  <header>
+    <div class="title">图片展示遥控</div>
+    <div id="status" class="status">连接中…</div>
+  </header>
+
+  <section class="upload">
+    <button id="pick" class="primary">选择图片（可多选）</button>
+    <input id="file" type="file" accept="image/*" multiple class="vis-hidden" />
+    <button id="toggleScreen" class="primary outline">▶ 打开大屏显示</button>
+    <div id="hint" class="hint">选好图片后自动逐张上传到大屏；点上方按钮可开关电脑端的大屏显示，列表里可随时删除误传的图片。</div>
+  </section>
+
+  <section class="transfer">
+    <div class="transfer-head">传输列表 <span id="transferCount" class="muted">0</span></div>
+    <ul id="transferList" class="transfer-list"></ul>
+  </section>
+
+  <section class="preview">
+    <div id="stage">
+      <img id="cur" alt="" />
+      <div id="empty" class="empty">尚未选择/上传图片</div>
+    </div>
+    <div class="counter"><span id="idx">0</span> / <span id="total">0</span></div>
+    <div class="tip">在画面上拖动可平移大屏图片视角</div>
+  </section>
+
+  <section class="controls">
+    <button data-act="prev">⟨ 上一张</button>
+    <button data-act="next">下一张 ⟩</button>
+    <button data-act="zoomin">＋ 放大</button>
+    <button data-act="zoomout">－ 缩小</button>
+    <button data-act="reset">重置视角</button>
+    <button data-act="exit" class="danger">退出预览</button>
+  </section>
+
+  <section class="thumbs">
+    <div id="thumbs" class="thumb-row"></div>
+  </section>
+
+  <script src="/show/show.js"></script>
+</body>
+</html>

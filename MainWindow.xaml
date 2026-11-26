@@ -1,0 +1,1540 @@
+<Window Name="window" x:Class="Painter.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Painter"
+        xmlns:h="clr-namespace:Painter.Helpers"
+        xmlns:ui="http://schemas.inkore.net/lib/ui/wpf/modern"
+        xmlns:c="clr-namespace:Painter.Converter"
+        mc:Ignorable="d"
+        AllowsTransparency="True"
+        WindowStyle="None"
+        ResizeMode="NoResize"
+        WindowState="Maximized"
+        Loaded="Window_Loaded"
+        Background="Transparent"
+        ShowInTaskbar="False"
+        Title="painter 画板"
+        Topmost="True"
+        KeyDown="Window_KeyDown"
+        Closing="Window_Closing"
+        Closed="Window_Closed"
+        PreviewKeyDown="Main_Grid_PreviewKeyDown"
+        Height="10000" Width="1000"
+        FontFamily="{DynamicResource AppFontFamily}"
+        MouseWheel="Window_MouseWheel"
+        Foreground="Black"
+        UseLayoutRounding="True"
+        Stylus.IsPressAndHoldEnabled="False"
+        Stylus.IsFlicksEnabled="False"
+        Stylus.IsTapFeedbackEnabled="False"
+        Stylus.IsTouchFeedbackEnabled="False">
+    <!--资源中添加命令-->
+    <Window.Resources>
+        <c:VisibilityConverter x:Key="VisibilityConverter"/>
+        <c:IsEnabledToOpacityConverter x:Key="IsEnabledToOpacityConverter"/>
+        <RoutedUICommand x:Key="KeyExit" Text=" "/>
+        <RoutedUICommand x:Key="back_HotKey_Command" Text=" "/>
+        <RoutedUICommand x:Key="HotKey_Capture" Text=" "/>
+        <RoutedUICommand x:Key="HotKey_Hide" Text=" "/>
+        <RoutedUICommand x:Key="HotKey_ChangeToDrawTool" Text=" "/>
+        <RoutedUICommand x:Key="HotKey_ChangeToSelect" Text=" "/>
+        <RoutedUICommand x:Key="HotKey_ChangeToEraser" Text=" "/>
+        <RoutedUICommand x:Key="HotKey_ChangeToPen1" Text=" "/>
+        <RoutedUICommand x:Key="HotKey_ChangeToPen2" Text=" "/>
+        <RoutedUICommand x:Key="HotKey_ChangeToPen3" Text=" "/>
+        <RoutedUICommand x:Key="HotKey_ChangeToPen4" Text=" "/>
+        <RoutedUICommand x:Key="HotKey_ChangeToPen5" Text=" "/>
+        <RoutedUICommand x:Key="HotKey_DrawLine" Text=" "/>
+    </Window.Resources>
+    <!--输入命令绑定-->
+    <Window.InputBindings>
+        <KeyBinding Gesture="Shift+Esc" Command="{StaticResource KeyExit}"/>
+        <KeyBinding Modifiers="Control" Key="Z" Command="{StaticResource back_HotKey_Command}"/>
+        <KeyBinding Modifiers="Alt" Key="S" Command="{StaticResource HotKey_ChangeToSelect}" />
+        <KeyBinding Modifiers="Alt" Key="D" Command="{StaticResource HotKey_ChangeToDrawTool}" />
+        <KeyBinding Modifiers="Alt" Key="E" Command="{StaticResource HotKey_ChangeToEraser}" />
+        <KeyBinding Modifiers="Alt" Key="C" Command="{StaticResource HotKey_Capture}" />
+        <KeyBinding Modifiers="Alt" Key="D1" Command="{StaticResource HotKey_ChangeToPen1}" />
+        <KeyBinding Modifiers="Alt" Key="D2" Command="{StaticResource HotKey_ChangeToPen2}" />
+        <KeyBinding Modifiers="Alt" Key="D3" Command="{StaticResource HotKey_ChangeToPen3}" />
+        <KeyBinding Modifiers="Alt" Key="D4" Command="{StaticResource HotKey_ChangeToPen4}" />
+        <KeyBinding Modifiers="Alt" Key="D5" Command="{StaticResource HotKey_ChangeToPen5}" />
+        <KeyBinding Modifiers="Alt" Key="V" Command="{StaticResource HotKey_Hide}" />
+        <KeyBinding Modifiers="Alt" Key="L" Command="{StaticResource HotKey_DrawLine}" />
+    </Window.InputBindings>
+    <!--命令执行方法绑定-->
+    <Window.CommandBindings>
+        <CommandBinding Command="{StaticResource back_HotKey_Command}"
+                    CanExecute="CommandBinding_CanExecute"
+                    Executed="back_HotKey"/>
+        <CommandBinding Command="{StaticResource KeyExit}"
+                    CanExecute="CommandBinding_CanExecute"
+                    Executed="KeyExit"/>
+        <CommandBinding Command="{StaticResource HotKey_ChangeToDrawTool}"
+                        CanExecute="CommandBinding_CanExecute"
+                        Executed="KeyChangeToDrawTool"/>
+        <CommandBinding Command="{StaticResource HotKey_ChangeToSelect}"
+                        CanExecute="CommandBinding_CanExecute"
+                        Executed="KeyChangeToSelect"/>
+        <CommandBinding Command="{StaticResource HotKey_ChangeToEraser}"
+                        CanExecute="CommandBinding_CanExecute"
+                        Executed="KeyChangeToEraser"/>
+        <CommandBinding Command="{StaticResource HotKey_Capture}"
+                        CanExecute="CommandBinding_CanExecute"
+                        Executed="KeyCapture"/>
+        <CommandBinding Command="{StaticResource HotKey_Hide}"
+                        CanExecute="CommandBinding_CanExecute"
+                        Executed="KeyHide"/>
+        <CommandBinding Command="{StaticResource HotKey_DrawLine}"
+                        CanExecute="CommandBinding_CanExecute"
+                        Executed="KeyDrawLine"/>
+        <CommandBinding Command="{StaticResource HotKey_ChangeToPen1}"
+                        CanExecute="CommandBinding_CanExecute"
+                        Executed="KeyChangeToPen1"/>
+        <CommandBinding Command="{StaticResource HotKey_ChangeToPen2}"
+                        CanExecute="CommandBinding_CanExecute"
+                        Executed="KeyChangeToPen2"/>
+        <CommandBinding Command="{StaticResource HotKey_ChangeToPen3}"
+                        CanExecute="CommandBinding_CanExecute"
+                        Executed="KeyChangeToPen3"/>
+        <CommandBinding Command="{StaticResource HotKey_ChangeToPen4}"
+                        CanExecute="CommandBinding_CanExecute"
+                        Executed="KeyChangeToPen4"/>
+        <CommandBinding Command="{StaticResource HotKey_ChangeToPen5}"
+                        CanExecute="CommandBinding_CanExecute"
+                        Executed="KeyChangeToPen5"/>
+    </Window.CommandBindings>
+    <Grid x:Name="Main_Grid" Background="#01FFFFFF">
+        <Grid Name="GridBackgroundCoverHolder">
+            <Grid Name="GridBackgroundCover" Visibility="Collapsed" Background="#1F1F1F"/>
+        </Grid>
+        <Canvas Name="Canvas"/>
+        <!-- 图片放映层：位于 painterCanvas 之下，画板笔迹可在其上标注；变换与 painterCanvas 共用同一 MatrixTransform -->
+        <Image x:Name="ShowImage" Visibility="Collapsed" Stretch="None"
+               HorizontalAlignment="Left" VerticalAlignment="Top"
+               RenderOptions.BitmapScalingMode="HighQuality"/>
+        <!-- PPT 放映模式下 Web 上传图片的屏幕叠加层：不进入内置白板，按幻灯片页码显隐；
+             放在 painterCanvas 之下，笔迹仍可标注；IsHitTestVisible=False 保证不拦截手势/输入。 -->
+        <Grid x:Name="PptShareLayer" Visibility="Collapsed" IsHitTestVisible="False"/>
+        <InkCanvas x:Name="painterCanvas" Background="Transparent" Cursor="Pen" ForceCursor="False"
+                   Stylus.IsPressAndHoldEnabled="False"
+                   Stylus.IsFlicksEnabled="False"
+                   Stylus.IsTapFeedbackEnabled="False"
+                   Stylus.IsTouchFeedbackEnabled="False"
+                   TouchUp="Main_Grid_TouchUp" TouchDown="Main_Grid_TouchDown"
+                   TouchMove="painterCanvas_TouchMove"
+                   ManipulationDelta="Main_Grid_ManipulationDelta"
+                   ManipulationCompleted="Main_Grid_ManipulationCompleted"
+                   ManipulationInertiaStarting="painterCanvas_ManipulationInertiaStarting"
+                   IsManipulationEnabled="True"
+                   EditingModeChanged="painterCanvas_EditingModeChanged"
+                   PreviewTouchDown="painterCanvas_PreviewTouchDown"
+                   PreviewTouchUp="painterCanvas_PreviewTouchUp"
+                   MouseDown="painterCanvas_MouseDown"
+                   MouseMove="painterCanvas_MouseMove"
+                   MouseUp="painterCanvas_MouseUp"
+                   ManipulationStarting="painterCanvas_ManipulationStarting"
+                   SelectionChanged="painterCanvas_SelectionChanged"
+                   StrokeCollected="painterCanvas_StrokeCollected"
+                   >
+            <!--<InkCanvas.DefaultDrawingAttributes>
+                <DrawingAttributes StylusTip="Ellipse" Height="8" Width="4" IgnorePressure="False" FitToCurve="True" >
+                    <DrawingAttributes.StylusTipTransform>
+                        <Matrix M11="1" M12="1.5" M21="2.2" M22="1"/>
+                    </DrawingAttributes.StylusTipTransform>
+                </DrawingAttributes>
+            </InkCanvas.DefaultDrawingAttributes>-->
+        </InkCanvas>
+        <!-- 图片放映控制条（类似 PPT 放映的换页 / 退出） -->
+        <Grid x:Name="ShowControlBar" Visibility="Collapsed" Panel.ZIndex="999"
+              HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,28">
+            <Border Background="#E61C1C1C" CornerRadius="8" Padding="6"
+                    BorderBrush="#33FFFFFF" BorderThickness="1">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button x:Name="BtnShowPrev" Width="46" Height="46" Margin="4,0"
+                            Background="Transparent" BorderThickness="0" Foreground="White"
+                            ToolTip="上一张"
+                            Click="BtnShowPrev_Click">
+                        <local:AppIcon Glyph="ChevronLeft" Width="20" Height="20" Foreground="White"/>
+                    </Button>
+                    <TextBlock x:Name="ShowIndexText" Foreground="White" FontSize="16"
+                               VerticalAlignment="Center" Margin="10,0" Text="0 / 0"/>
+                    <Button x:Name="BtnShowNext" Width="46" Height="46" Margin="4,0"
+                            Background="Transparent" BorderThickness="0" Foreground="White"
+                            ToolTip="下一张"
+                            Click="BtnShowNext_Click">
+                        <local:AppIcon Glyph="ChevronRight" Width="20" Height="20" Foreground="White"/>
+                    </Button>
+                    <Button x:Name="BtnShowExit" Width="46" Height="46" Margin="4,0"
+                            Background="Transparent" BorderThickness="0" Foreground="White"
+                            ToolTip="退出图片放映"
+                            Click="BtnShowExit_Click">
+                        <local:AppIcon Glyph="Clear" Width="20" Height="20" Foreground="White"/>
+                    </Button>
+                </StackPanel>
+            </Border>
+        </Grid>
+        <Grid Visibility="{Binding ElementName=painterCanvas, Path=Visibility}">
+            <Grid Name="GridPainterCanvasSelectionCover"
+                  MouseDown="GridPainterCanvasSelectionCover_MouseDown"
+                  MouseUp="GridPainterCanvasSelectionCover_MouseUp"
+                  IsManipulationEnabled="True"
+                  ManipulationStarting="GridPainterCanvasSelectionCover_ManipulationStarting"
+                  ManipulationCompleted="GridPainterCanvasSelectionCover_ManipulationCompleted"
+                  ManipulationDelta="GridPainterCanvasSelectionCover_ManipulationDelta"
+                  PreviewTouchDown="GridPainterCanvasSelectionCover_PreviewTouchDown"
+                  PreviewTouchUp="GridPainterCanvasSelectionCover_PreviewTouchUp"
+                  TouchDown="GridPainterCanvasSelectionCover_TouchDown"
+                  TouchUp="GridPainterCanvasSelectionCover_TouchUp"
+                  Background="#01FFFFFF" Opacity="0.01" Visibility="Visible"/>
+            <Border Name="BorderStrokeSelectionControl"
+                    HorizontalAlignment="Left" VerticalAlignment="Top" Margin="100,900,0,0"
+                    CornerRadius="8" Height="80"
+                    Background="{DynamicResource FloatBarBackground}" Visibility="{Binding ElementName=GridPainterCanvasSelectionCover, Path=Visibility}"
+                    BorderThickness="1" BorderBrush="{DynamicResource FloatBarBorderBrush}">
+                <Viewbox Margin="0,-2.5">
+                    <ui:SimpleStackPanel Orientation="Horizontal" Spacing="10" Height="60">
+                        <Border Name="BorderStrokeSelectionClone" Margin="0,2,-9,2" Background="Transparent" CornerRadius="{Binding ElementName=BorderStrokeSelectionControl, Path=CornerRadius}"
+                                Width="40" MouseDown="Border_MouseDown" MouseUp="BorderStrokeSelectionClone_MouseUp">
+                            <ui:SimpleStackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="5">
+                                <local:AppIcon Glyph="Copy" Foreground="{DynamicResource FloatBarForeground}"/>
+                                <TextBlock Text="克隆" FontSize="10" Foreground="{DynamicResource FloatBarForeground}"/>
+                            </ui:SimpleStackPanel>
+                        </Border>
+                        <Border Name="BorderStrokeSelectionCloneToNewBoard" Margin="0,2,-9,2" Background="Transparent" CornerRadius="{Binding ElementName=BorderStrokeSelectionControl, Path=CornerRadius}"
+                                Width="40" MouseDown="Border_MouseDown" MouseUp="BorderStrokeSelectionCloneToNewBoard_MouseUp" Visibility="{Binding Visibility, ElementName=GridBackgroundCover}">
+                            <ui:SimpleStackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="5">
+                                <local:AppIcon Glyph="Copy" Foreground="{DynamicResource FloatBarForeground}"/>
+                                <TextBlock Text="克隆至新页" FontSize="8" Foreground="{DynamicResource FloatBarForeground}"/>
+                            </ui:SimpleStackPanel>
+                        </Border>
+                        <Border Width="1" Height="45" BorderBrush="{DynamicResource FloatBarForeground}" Background="{DynamicResource FloatBarForeground}"/>
+                        <Border CornerRadius="{Binding ElementName=BorderStrokeSelectionControl, Path=CornerRadius}" Height="40">
+                            <ui:SimpleStackPanel VerticalAlignment="Center" Spacing="5" Margin="0,-10">
+                                <ui:SimpleStackPanel Orientation="Horizontal" Spacing="15">
+                                    <Image Source="{DynamicResource Rotate45DrawingImage}" Height="22" MouseDown="Border_MouseDown" MouseUp="ImageRotate45_MouseUp"/>
+                                    <Image Source="{DynamicResource Rotate90DrawingImage}" Height="22" MouseDown="Border_MouseDown" MouseUp="ImageRotate90_MouseUp"/>
+                                </ui:SimpleStackPanel>
+                                <TextBlock Text="旋转" FontSize="10" HorizontalAlignment="Center" Foreground="{DynamicResource FloatBarForeground}"/>
+                            </ui:SimpleStackPanel>
+                        </Border>
+                        <Border Width="1" Height="45" BorderBrush="{DynamicResource FloatBarForeground}" Background="{DynamicResource FloatBarForeground}"/>
+                        <Border Margin="0,0,-6,0" CornerRadius="{Binding ElementName=BorderStrokeSelectionControl, Path=CornerRadius}" Height="40">
+                            <ui:SimpleStackPanel VerticalAlignment="Center" Spacing="5" Margin="0,-10">
+                                <ui:SimpleStackPanel Orientation="Horizontal" Spacing="15">
+                                    <Image Source="{DynamicResource FlipDrawingImage}" Width="19" Height="22" MouseDown="Border_MouseDown" MouseUp="ImageFlipHorizontal_MouseUp"/>
+                                    <Image Source="{DynamicResource FlipDrawingImage}" Width="19" Height="22" MouseDown="Border_MouseDown" MouseUp="ImageFlipVertical_MouseUp"
+                                           Margin="0,0,8,0" RenderTransformOrigin="0.5,0.5">
+                                        <Image.RenderTransform>
+                                            <TransformGroup>
+                                                <ScaleTransform/>
+                                                <SkewTransform/>
+                                                <RotateTransform Angle="90"/>
+                                                <TranslateTransform/>
+                                            </TransformGroup>
+                                        </Image.RenderTransform>
+                                    </Image>
+                                </ui:SimpleStackPanel>
+                                <TextBlock Text="翻转" FontSize="10" Margin="-8,0,0,0" HorizontalAlignment="Center" Foreground="{DynamicResource FloatBarForeground}"/>
+                            </ui:SimpleStackPanel>
+                        </Border>
+                        <Border Width="1" Height="45" BorderBrush="{DynamicResource FloatBarForeground}" Background="{DynamicResource FloatBarForeground}"/>
+                        <Border CornerRadius="{Binding ElementName=BorderStrokeSelectionControl, Path=CornerRadius}" Height="40">
+                            <ui:SimpleStackPanel VerticalAlignment="Center" Spacing="5" Margin="0,-10">
+                                <ui:SimpleStackPanel Orientation="Horizontal" Spacing="13">
+                                    <Grid MouseDown="Border_MouseDown" MouseUp="GridPenWidthDecrease_MouseUp">
+                                        <local:AppIcon Glyph="Edit" Foreground="{DynamicResource FloatBarForeground}"/>
+                                        <TextBlock Text="-"  Foreground="{DynamicResource FloatBarForeground}"
+                                                   VerticalAlignment="Bottom" HorizontalAlignment="Right"
+                                                   Margin="0,0,-2,-7" FontSize="15"/>
+                                    </Grid>
+                                    <Grid MouseDown="Border_MouseDown" MouseUp="GridPenWidthIncrease_MouseUp">
+                                        <local:AppIcon Glyph="Edit" Foreground="{DynamicResource FloatBarForeground}"/>
+                                        <TextBlock Text="+"  Foreground="{DynamicResource FloatBarForeground}"
+                                                   VerticalAlignment="Bottom" HorizontalAlignment="Right"
+                                                   Margin="0,0,-3,-4" FontSize="11"/>
+                                    </Grid>
+                                    <Grid MouseDown="Border_MouseDown" MouseUp="GridPenWidthRestore_MouseUp">
+                                        <local:AppIcon Glyph="Edit" Foreground="{DynamicResource FloatBarForeground}"/>
+                                        <Image Source="{DynamicResource AndroidRefreshDrawingImage}" VerticalAlignment="Bottom" HorizontalAlignment="Right"
+                                               Margin="0,0,-2,-2" Width="8">
+                                        </Image>
+                                    </Grid>
+                                </ui:SimpleStackPanel>
+                                <TextBlock Text="画笔粗细" FontSize="10" HorizontalAlignment="Center" Foreground="{DynamicResource FloatBarForeground}"/>
+                            </ui:SimpleStackPanel>
+                        </Border>
+                        <!-- 物理工具（选中圆形笔迹时才显示）：磁场点/叉、清除、常用电磁符号 -->
+                        <Border Width="1" Height="45" Name="BorderPhysicsSeparator" Visibility="Collapsed" BorderBrush="{DynamicResource FloatBarForeground}" Background="{DynamicResource FloatBarForeground}"/>
+                        <Border Name="BorderPhysicsTools" Visibility="Collapsed" CornerRadius="{Binding ElementName=BorderStrokeSelectionControl, Path=CornerRadius}" Height="40">
+                            <ui:SimpleStackPanel VerticalAlignment="Center" Spacing="4" Margin="0,-10">
+                                <ui:SimpleStackPanel Orientation="Horizontal" Spacing="6">
+                                    <Border Background="Transparent" Padding="4,2" MouseDown="Border_MouseDown" MouseUp="PhysicsFillDot_MouseUp" ToolTip="填充点 ⊙：磁场垂直纸面向外">
+                                        <TextBlock Text="⊙ 点" FontSize="12" Foreground="{DynamicResource FloatBarForeground}"/>
+                                    </Border>
+                                    <Border Background="Transparent" Padding="4,2" MouseDown="Border_MouseDown" MouseUp="PhysicsFillCross_MouseUp" ToolTip="填充叉 ⊗：磁场垂直纸面向里">
+                                        <TextBlock Text="⊗ 叉" FontSize="12" Foreground="{DynamicResource FloatBarForeground}"/>
+                                    </Border>
+                                    <Border Background="Transparent" Padding="4,2" MouseDown="Border_MouseDown" MouseUp="PhysicsFillClear_MouseUp" ToolTip="清除该圆的磁场填充">
+                                        <TextBlock Text="清除" FontSize="11" Foreground="{DynamicResource FloatBarForeground}"/>
+                                    </Border>
+                                </ui:SimpleStackPanel>
+                                <ui:SimpleStackPanel Orientation="Horizontal" Spacing="6">
+                                    <Border Background="Transparent" Padding="3,1" MouseDown="Border_MouseDown" MouseUp="PhysicsSymbol_MouseUp" Tag="CurrentArrow" ToolTip="电流方向箭头">
+                                        <TextBlock Text="→电流" FontSize="10" Foreground="{DynamicResource FloatBarForeground}"/>
+                                    </Border>
+                                    <Border Background="Transparent" Padding="3,1" MouseDown="Border_MouseDown" MouseUp="PhysicsSymbol_MouseUp" Tag="Resistor" ToolTip="电阻">
+                                        <TextBlock Text="电阻" FontSize="10" Foreground="{DynamicResource FloatBarForeground}"/>
+                                    </Border>
+                                    <Border Background="Transparent" Padding="3,1" MouseDown="Border_MouseDown" MouseUp="PhysicsSymbol_MouseUp" Tag="Capacitor" ToolTip="电容">
+                                        <TextBlock Text="电容" FontSize="10" Foreground="{DynamicResource FloatBarForeground}"/>
+                                    </Border>
+                                    <Border Background="Transparent" Padding="3,1" MouseDown="Border_MouseDown" MouseUp="PhysicsSymbol_MouseUp" Tag="Inductor" ToolTip="电感线圈">
+                                        <TextBlock Text="电感" FontSize="10" Foreground="{DynamicResource FloatBarForeground}"/>
+                                    </Border>
+                                    <Border Background="Transparent" Padding="3,1" MouseDown="Border_MouseDown" MouseUp="PhysicsSymbol_MouseUp" Tag="Diode" ToolTip="二极管">
+                                        <TextBlock Text="二极管" FontSize="10" Foreground="{DynamicResource FloatBarForeground}"/>
+                                    </Border>
+                                    <Border Background="Transparent" Padding="3,1" MouseDown="Border_MouseDown" MouseUp="PhysicsSymbol_MouseUp" Tag="Ground" ToolTip="接地">
+                                        <TextBlock Text="接地" FontSize="10" Foreground="{DynamicResource FloatBarForeground}"/>
+                                    </Border>
+                                    <Border Background="Transparent" Padding="3,1" MouseDown="Border_MouseDown" MouseUp="PhysicsSymbol_MouseUp" Tag="Battery" ToolTip="电源（长正短负）">
+                                        <TextBlock Text="电源" FontSize="10" Foreground="{DynamicResource FloatBarForeground}"/>
+                                    </Border>
+                                    <Border Background="Transparent" Padding="3,1" MouseDown="Border_MouseDown" MouseUp="PhysicsSymbol_MouseUp" Tag="Switch" ToolTip="开关">
+                                        <TextBlock Text="开关" FontSize="10" Foreground="{DynamicResource FloatBarForeground}"/>
+                                    </Border>
+                                    <Border Background="Transparent" Padding="3,1" MouseDown="Border_MouseDown" MouseUp="PhysicsSymbol_MouseUp" Tag="Led" ToolTip="发光二极管">
+                                        <TextBlock Text="LED" FontSize="10" Foreground="{DynamicResource FloatBarForeground}"/>
+                                    </Border>
+                                </ui:SimpleStackPanel>
+                            </ui:SimpleStackPanel>
+                        </Border>
+                        <Border Width="1" Height="45" BorderBrush="{DynamicResource FloatBarForeground}" Background="{DynamicResource FloatBarForeground}"/>
+                        <Border Margin="-8,0,0,0" CornerRadius="{Binding ElementName=BorderStrokeSelectionControl, Path=CornerRadius}" Width="40" MouseDown="Border_MouseDown" MouseUp="BorderStrokeSelectionDelete_MouseUp">
+                            <ui:SimpleStackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="5">
+                                <local:AppIcon Glyph="Delete" Foreground="{DynamicResource FloatBarForeground}"/>
+                                <TextBlock Text="删除" FontSize="10" Foreground="{DynamicResource FloatBarForeground}"/>
+                            </ui:SimpleStackPanel>
+                        </Border>
+                    </ui:SimpleStackPanel>
+                </Viewbox>
+            </Border>
+        </Grid>
+
+        <Grid Visibility="Collapsed">
+            <Grid Visibility="{Binding ElementName=GridBackgroundCoverHolder, Path=Visibility}">
+                <Viewbox Margin="10" Height="50" HorizontalAlignment="Right" VerticalAlignment="Bottom">
+                    <ui:SimpleStackPanel Orientation="Horizontal" Spacing="5">
+                        <Border Width="36" Height="36" CornerRadius="6" Background="{DynamicResource FloatBarBackground}" BorderThickness="1" BorderBrush="{DynamicResource FloatBarBorderBrush}">
+                            <Grid Margin="6" MouseUp="GridPPTControlPrevious_MouseUp">
+                                <Image Source="{DynamicResource ResourceKey=SeewoImageSource.HorizontalPreviousSlideNormal}"/>
+                            </Grid>
+                        </Border>
+                        <Border Visibility="{Binding ElementName=PptNavigationBtn, Path=Visibility}" Width="36" Height="36" CornerRadius="6" Background="{DynamicResource FloatBarBackground}" BorderThickness="1" BorderBrush="{DynamicResource FloatBarBorderBrush}">
+                            <Grid MouseUp="PPTNavigationBtn_Click">
+                                <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{Binding ElementName=PptNavigationTextBlock, Path=Foreground}" FontSize="{Binding ElementName=PptNavigationTextBlock, Path=FontSize}" Text="{Binding ElementName=PptNavigationTextBlock, Path=Text}" />
+                            </Grid>
+                        </Border>
+                        <Border Width="36" Height="36" CornerRadius="6" Background="{DynamicResource FloatBarBackground}" BorderThickness="1" BorderBrush="{DynamicResource FloatBarBorderBrush}">
+                            <Grid Margin="6" MouseUp="GridPPTControlNext_MouseUp">
+                                <Image Source="{DynamicResource ResourceKey=SeewoImageSource.HorizontalNextSlideNormal}"/>
+                            </Grid>
+                        </Border>
+                    </ui:SimpleStackPanel>
+                </Viewbox>
+            </Grid>
+        </Grid>
+        <Grid Visibility="{Binding ElementName=GridBackgroundCoverHolder, Path=Visibility}">
+            <Viewbox Visibility="{Binding ElementName=GridBackgroundCover, Path=Visibility}" Opacity="0.7" Margin="10" Height="50" HorizontalAlignment="Right" VerticalAlignment="Bottom">
+                <ui:SimpleStackPanel Orientation="Horizontal" Spacing="5">
+                    <Border Width="36" Height="36" MouseUp="BtnWhiteBoardAdd_Click" CornerRadius="6" Background="{DynamicResource FloatBarBackground}" BorderThickness="1" BorderBrush="{DynamicResource FloatBarBorderBrush}">
+                        <Viewbox Margin="8">
+                            <local:AppIcon Glyph="Add" Foreground="{DynamicResource FloatBarForeground}" />
+                        </Viewbox>
+                    </Border>
+                    <Border Width="36" MouseUp="BtnWhiteBoardSwitchPrevious_Click" Height="36" CornerRadius="6" Background="{DynamicResource FloatBarBackground}" BorderThickness="1" BorderBrush="{DynamicResource FloatBarBorderBrush}">
+                        <Grid Margin="6">
+                            <Image Visibility="Collapsed" Source="{DynamicResource ResourceKey=SeewoImageSource.HorizontalPreviousSlideSelected}"/>
+                            <Image Source="{DynamicResource ResourceKey=SeewoImageSource.HorizontalPreviousSlideNormal}"/>
+                        </Grid>
+                    </Border>
+                    <Border Height="36" CornerRadius="2" Margin="0,0">
+                        <TextBlock Text="{Binding ElementName=TextBlockWhiteBoardIndexInfo, Path=Text}"
+                                   Foreground="White"
+                                   VerticalAlignment="Center" HorizontalAlignment="Center"
+                                   FontFamily="{DynamicResource AppFontFamily}" FontSize="12"/>
+                    </Border>
+                    <Border Width="36" MouseUp="BtnWhiteBoardSwitchNext_Click" Height="36" CornerRadius="6" Background="{DynamicResource FloatBarBackground}" BorderThickness="1" BorderBrush="{DynamicResource FloatBarBorderBrush}">
+                        <Grid Margin="6">
+                            <Image Visibility="Collapsed" Source="{DynamicResource ResourceKey=SeewoImageSource.HorizontalNextSlideSelected}"/>
+                            <Image Source="{DynamicResource ResourceKey=SeewoImageSource.HorizontalNextSlideNormal}"/>
+                        </Grid>
+                    </Border>
+                </ui:SimpleStackPanel>
+            </Viewbox>
+            <Viewbox Visibility="{Binding ElementName=GridBackgroundCover, Path=Visibility}" Opacity="0.7" Margin="10" Height="50" HorizontalAlignment="Left" VerticalAlignment="Bottom">
+                <ui:SimpleStackPanel Orientation="Horizontal" Spacing="5">
+                    <Border Width="36" Height="36" MouseUp="BorderMultiTouchMode_MouseUp" CornerRadius="6" Background="{DynamicResource FloatBarBackground}" BorderThickness="1" BorderBrush="{DynamicResource FloatBarBorderBrush}">
+                        <Viewbox Margin="8">
+                            <local:AppIcon x:Name="SymbolIconMultiTouchMode" Glyph="People" Foreground="{DynamicResource FloatBarForeground}" />
+                        </Viewbox>
+                    </Border>
+                </ui:SimpleStackPanel>
+            </Viewbox>
+            <ui:SimpleStackPanel Spacing="10" Orientation="Horizontal"
+                             VerticalAlignment="Bottom"
+                             HorizontalAlignment="Right"
+                             Height="50" Margin="10"
+                             Visibility="Collapsed">
+                <Button Name="BtnWhiteBoardAdd" FontFamily="{DynamicResource AppFontFamily}"
+                    Width="50" Height="48" FontSize="26" Click="BtnWhiteBoardAdd_Click"
+                    Foreground="{Binding ElementName=BtnExit, Path=Foreground}"
+                    Background="{Binding ElementName=BtnExit, Path=Background}">
+                    <local:AppIcon Glyph="Add" />
+                </Button>
+                <Button Name="BtnWhiteBoardSwitchPrevious" FontFamily="Symbol"
+                    Width="50" Height="48" FontSize="25" Click="BtnWhiteBoardSwitchPrevious_Click"
+                    Foreground="{Binding ElementName=BtnExit, Path=Foreground}"
+                    Background="{Binding ElementName=BtnExit, Path=Background}"
+                    VerticalContentAlignment="Center"
+                    IsEnabled="False" IsEnabledChanged="Btn_IsEnabledChanged">
+                    <Image RenderTransformOrigin="0.5,0.5" Opacity="0.25">
+                        <Image.RenderTransform>
+                            <TransformGroup>
+                                <ScaleTransform/>
+                                <SkewTransform/>
+                                <RotateTransform Angle="-90"/>
+                                <TranslateTransform/>
+                            </TransformGroup>
+                        </Image.RenderTransform>
+                        <Image.Source>
+                            <DrawingImage>
+                                <DrawingImage.Drawing>
+                                    <DrawingGroup ClipGeometry="M0,0 V64 H64 V0 H0 Z">
+                                        <DrawingGroup Opacity="1">
+                                            <GeometryDrawing Brush="{Binding ElementName=BtnExit, Path=Foreground}" Geometry="F1 M64,64z M0,0z M32,26.41L16.566,41.844 14.439,39.717 32,22.156 49.561,39.717 47.434,41.844 32,26.41z" />
+                                        </DrawingGroup>
+                                    </DrawingGroup>
+                                </DrawingImage.Drawing>
+                            </DrawingImage>
+                        </Image.Source>
+                    </Image>
+                </Button>
+                <Border Height="48" CornerRadius="2" Margin="3,0">
+                    <TextBlock Name="TextBlockWhiteBoardIndexInfo"
+                               Text="1 / 1"
+                               Foreground="{Binding ElementName=BtnExit, Path=Foreground}"
+                               VerticalAlignment="Center" HorizontalAlignment="Center" FontFamily="{DynamicResource AppFontFamily}" FontSize="18"/>
+                </Border>
+                <Button Name="BtnWhiteBoardSwitchNext" FontFamily="Symbol"
+                    Width="50" Height="48" FontSize="25" Click="BtnWhiteBoardSwitchNext_Click"
+                    Foreground="{Binding ElementName=BtnExit, Path=Foreground}"
+                    Background="{Binding ElementName=BtnExit, Path=Background}"
+                    VerticalContentAlignment="Center"
+                    IsEnabled="False" IsEnabledChanged="Btn_IsEnabledChanged">
+                    <Image RenderTransformOrigin="0.5,0.5" Opacity="0.25">
+                        <Image.RenderTransform>
+                            <TransformGroup>
+                                <ScaleTransform/>
+                                <SkewTransform/>
+                                <RotateTransform Angle="90"/>
+                                <TranslateTransform/>
+                            </TransformGroup>
+                        </Image.RenderTransform>
+                        <Image.Source>
+                            <DrawingImage>
+                                <DrawingImage.Drawing>
+                                    <DrawingGroup ClipGeometry="M0,0 V64 H64 V0 H0 Z">
+                                        <DrawingGroup Opacity="1">
+                                            <GeometryDrawing Brush="{Binding ElementName=BtnExit, Path=Foreground}" Geometry="F1 M64,64z M0,0z M32,26.41L16.566,41.844 14.439,39.717 32,22.156 49.561,39.717 47.434,41.844 32,26.41z" />
+                                        </DrawingGroup>
+                                    </DrawingGroup>
+                                </DrawingImage.Drawing>
+                            </DrawingImage>
+                        </Image.Source>
+                    </Image>
+                </Button>
+                <Button Name="BtnWhiteBoardDelete" Click="BtnWhiteBoardDelete_Click"
+                    FontFamily="{DynamicResource AppFontFamily}" Width="50" Height="48" FontSize="26"
+                    Foreground="{Binding ElementName=BtnExit, Path=Foreground}"
+                    Background="{Binding ElementName=BtnExit, Path=Background}"
+                    IsEnabled="False">
+                    <local:AppIcon Glyph="Delete" />
+                </Button>
+            </ui:SimpleStackPanel>
+        </Grid>
+
+        <Border Name="BorderSettings" Background="#FFF3F3F3" BorderBrush="#FFE5E5E5"
+                BorderThickness="1" CornerRadius="8" ui:ThemeManager.RequestedTheme="Light"
+                Width="400" HorizontalAlignment="Center"
+                Margin="0,80,0,120" Visibility="Visible">
+            <!-- 设置面板整体固定为浅色（ui:ThemeManager.RequestedTheme="Light"），
+                 因此这里就地覆盖 Fluent 卡片相关键，避免深色主题下 App.xaml 的动态值
+                 把面板内的卡片、文字刷成深色而与浅色的 iNKORE 控件冲突。 -->
+            <Border.Resources>
+                <SolidColorBrush x:Key="FluentCardBackgroundBrush" Color="#FFFFFFFF"/>
+                <SolidColorBrush x:Key="FluentCardBorderBrush" Color="#FFE5E5E5"/>
+                <SolidColorBrush x:Key="FluentTextPrimaryBrush" Color="#FF1B1B1B"/>
+                <SolidColorBrush x:Key="FluentTextSecondaryBrush" Color="#FF5D5D5D"/>
+                <SolidColorBrush x:Key="FluentControlFillBrush" Color="#FFFBFBFB"/>
+                <SolidColorBrush x:Key="FluentControlStrokeBrush" Color="#FFE1E1E1"/>
+                <SolidColorBrush x:Key="FluentControlStrongStrokeBrush" Color="#FF8A8A8A"/>
+                <SolidColorBrush x:Key="FluentSliderTrackBrush" Color="#FFE5E5E5"/>
+                <SolidColorBrush x:Key="FluentAccentFillBrush" Color="#FF005FB8"/>
+                <SolidColorBrush x:Key="FluentHoverOverlayBrush" Color="#0F000000"/>
+                <SolidColorBrush x:Key="FluentPressedOverlayBrush" Color="#1A000000"/>
+                <!-- 设置面板内的操作按钮：统一最小宽度，去掉各处写死的 Width，保证对齐一致 -->
+                <Style x:Key="SettingsActionButtonStyle" TargetType="{x:Type Button}" BasedOn="{StaticResource {x:Type Button}}">
+                    <Setter Property="MinWidth" Value="120"/>
+                    <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                </Style>
+            </Border.Resources>
+            <Grid>
+                <ui:ScrollViewerEx Margin="0,60,0,50" VerticalScrollBarVisibility="Auto"
+                              PanningMode="VerticalOnly" ui:ThemeManager.RequestedTheme="Light"
+                              ManipulationBoundaryFeedback="SCManipulationBoundaryFeedback">
+                    <StackPanel Margin="20,20,10,20">
+                        <TextBlock FontSize="14" Margin="0,0,0,0"
+                                   Text="*设置将自动保存，再次点击“设置”按钮即可关闭此页面。"/>
+                        <TextBlock FontSize="14" Margin="0,0,0,12"
+                                   Text="*部分设置可能需要重新打开后生效。"/>
+                        <GroupBox Header="行为">
+                            <ui:SimpleStackPanel Spacing="12">
+                                <ui:SimpleStackPanel Spacing="12" Orientation="Horizontal">
+                                    <Button Content="立即重新启动画板" MinWidth="160" Style="{StaticResource SettingsActionButtonStyle}" FontFamily="{DynamicResource AppFontFamily}" Click="BtnRestart_Click"/>
+                                    <Button Content="立即退出" MinWidth="160" Style="{StaticResource DangerButtonStyle}" FontFamily="{DynamicResource AppFontFamily}" Click="BtnExit_Click"/>
+                                </ui:SimpleStackPanel>
+                                <ui:ToggleSwitch Name="ToggleSwitchRunAtStartup" Header="开机时运行" FontFamily="{DynamicResource AppFontFamily}" OnContent="开" OffContent="关" Toggled="ToggleSwitchRunAtStartup_Toggled"/>
+                            </ui:SimpleStackPanel>
+                        </GroupBox>
+                        <GroupBox Header="启动">
+                            <ui:SimpleStackPanel Spacing="12">
+                                <ui:ToggleSwitch Name="ToggleSwitchAutoHideCanvas" Header="自动隐藏画板" FontFamily="{DynamicResource AppFontFamily}" OnContent="开" OffContent="关" Toggled="ToggleSwitchAutoHideCanvas_Toggled"/>
+                                <ui:ToggleSwitch Name="ToggleSwitchAutoEnterModeFinger" Header="自动进入手指模式" FontFamily="{DynamicResource AppFontFamily}" OnContent="开" OffContent="关" Toggled="ToggleSwitchAutoEnterModeFinger_Toggled"/>
+                            </ui:SimpleStackPanel>
+                        </GroupBox>
+                        <GroupBox Header="画板">
+                            <ui:SimpleStackPanel Spacing="12">
+                                <DockPanel LastChildFill="True">
+                                    <Border DockPanel.Dock="Right" MinWidth="42" Margin="12,16,0,0"
+                                            Background="{DynamicResource FluentControlFillBrush}"
+                                            BorderBrush="{DynamicResource FluentCardBorderBrush}" BorderThickness="1"
+                                            CornerRadius="4" Padding="6,2" HorizontalAlignment="Center">
+                                        <TextBlock Text="{Binding Value, ElementName=InkWidthSlider, Mode=OneWay}"
+                                                   FontSize="14" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
+                                    <Slider x:Name="InkWidthSlider" 
+                                            HorizontalAlignment="Left"
+                                            Minimum="1" Maximum="20"
+                                            Width="330" FontFamily="{DynamicResource AppFontFamily}" 
+                                            ui:ControlHelper.Header="画笔粗细"
+                                            IsSnapToTickEnabled="True" Value="5"
+                                            TickFrequency="1" TickPlacement="Both"
+                                            ValueChanged="InkWidthSlider_ValueChanged"/>
+                                </DockPanel>
+                                <ui:ToggleSwitch Name="ToggleSwitchShowCursor" Header="显示画笔光标" IsOn="False" FontFamily="{DynamicResource AppFontFamily}" OnContent="开" OffContent="关" Toggled="ToggleSwitchShowCursor_Toggled"/>
+                                <TextBlock Text="画笔样式" FontFamily="{DynamicResource AppFontFamily}" FontSize="14"/>
+                                <ComboBox Name="ComboBoxPenStyle" FontFamily="{DynamicResource AppFontFamily}" SelectedIndex="2" SelectionChanged="ComboBoxPenStyle_SelectionChanged">
+                                    <ComboBoxItem Content="模拟笔锋（根据墨迹尾部计算）" FontFamily="{DynamicResource AppFontFamily}"/>
+                                    <ComboBoxItem Content="模拟笔锋（根据速度计算）" FontFamily="{DynamicResource AppFontFamily}"/>
+                                    <ComboBoxItem Content="无笔锋"  FontFamily="{DynamicResource AppFontFamily}"/>
+                                </ComboBox>
+                                <ui:ToggleSwitch Header="手指模式" IsOn="{Binding ElementName=ToggleSwitchModeFinger, Path=IsOn}" FontFamily="{DynamicResource AppFontFamily}" OnContent="开" OffContent="关"/>
+                                <TextBlock Text="此选项仅适用于可获取触摸面积的屏幕" TextWrapping="Wrap" Foreground="{DynamicResource FluentTextSecondaryBrush}"/>
+                                <TextBlock Text="橡皮模式"  FontFamily="{DynamicResource AppFontFamily}" FontSize="14"/>
+                                <ComboBox Name="ComboBoxEraserType" FontFamily="{DynamicResource AppFontFamily}" SelectedIndex="0" SelectionChanged="ComboBoxEraserType_OnSelectionChanged">
+                                    <ComboBoxItem Content="交替切换" FontFamily="{DynamicResource AppFontFamily}"/>
+                                    <ComboBoxItem Content="面积擦" FontFamily="{DynamicResource AppFontFamily}"/>
+                                    <ComboBoxItem Content="笔画擦" FontFamily="{DynamicResource AppFontFamily}"/>
+                                </ComboBox>
+                                <TextBlock Text="橡皮大小"  FontFamily="{DynamicResource AppFontFamily}" FontSize="14"/>
+                                <ComboBox Name="ComboBoxEraserSize" FontFamily="{DynamicResource AppFontFamily}" SelectedIndex="2" SelectionChanged="ComboBoxEraserSize_SelectionChanged">
+                                    <ComboBoxItem Content="小" FontFamily="{DynamicResource AppFontFamily}"/>
+                                    <ComboBoxItem Content="较小" FontFamily="{DynamicResource AppFontFamily}"/>
+                                    <ComboBoxItem Content="中（默认）" FontFamily="{DynamicResource AppFontFamily}"/>
+                                    <ComboBoxItem Content="较大"  FontFamily="{DynamicResource AppFontFamily}"/>
+                                    <ComboBoxItem Content="大"  FontFamily="{DynamicResource AppFontFamily}"/>
+                                </ComboBox>
+                                <ui:ToggleSwitch Name="ToggleSwitchHideStrokeWhenSelecting" Header="退出画板模式后隐藏墨迹" IsOn="False" FontFamily="{DynamicResource AppFontFamily}" OnContent="开" OffContent="关" Toggled="ToggleSwitchHideStrokeWhenSelecting_Toggled"/>
+                                <ui:ToggleSwitch Name="ToggleSwitchUsingWhiteboard" Header="使用白板 (白色背景)" IsOn="False" FontFamily="{DynamicResource AppFontFamily}" OnContent="开" OffContent="关" Toggled="ToggleSwitchUsingWhiteboard_Toggled"/>
+                                <ui:ToggleSwitch Name="ToggleSwitchAutoPerformance" Header="低配设备自动优化（关闭笔锋与墨迹识别）" IsOn="True" FontFamily="{DynamicResource AppFontFamily}" OnContent="开" OffContent="关" Toggled="ToggleSwitchAutoPerformance_Toggled"/>
+                                <TextBlock Text="开启后会在集显、Win7、双核或内存小于 4.5 GB 的设备上自动切换为流畅优先，优先保证书写跟手性" TextWrapping="Wrap" Foreground="{DynamicResource FluentTextSecondaryBrush}"/>
+                                <TextBlock Text="保留双曲线渐近线" FontFamily="{DynamicResource AppFontFamily}" FontSize="14"/>
+                                <ComboBox Name="ComboBoxHyperbolaAsymptoteOption" FontFamily="{DynamicResource AppFontFamily}" SelectedIndex="2" SelectionChanged="ComboBoxHyperbolaAsymptoteOption_SelectionChanged">
+                                    <ComboBoxItem Content="是" FontFamily="{DynamicResource AppFontFamily}"/>
+                                    <ComboBoxItem Content="否" FontFamily="{DynamicResource AppFontFamily}"/>
+                                    <ComboBoxItem Content="每次询问" FontFamily="{DynamicResource AppFontFamily}"/>
+                                </ComboBox>
+                            </ui:SimpleStackPanel>
+                        </GroupBox>
+                        <GroupBox Header="手势">
+                            <ui:SimpleStackPanel Spacing="12">
+                                <ui:ToggleSwitch Name="ToggleSwitchDisableLockSmithByDefault" Header="默认启用双指手势" FontFamily="{DynamicResource AppFontFamily}" IsOn="True" OnContent="开" OffContent="关" Toggled="ToggleSwitchDisableLockSmithByDefault_Toggled"/>
+                                <ui:ToggleSwitch Name="ToggleSwitchEnableTwoFingerZoom" Header="允许双指缩放" FontFamily="{DynamicResource AppFontFamily}" IsOn="True" OnContent="开" OffContent="关" Toggled="ToggleSwitchEnableTwoFingerZoom_Toggled"/>
+                                <ui:ToggleSwitch Name="ToggleSwitchEnableTwoFingerTranslate" Header="允许双指移动" FontFamily="{DynamicResource AppFontFamily}" IsOn="True" OnContent="开" OffContent="关" Toggled="ToggleSwitchEnableTwoFingerTranslate_Toggled"/>
+                                <ui:ToggleSwitch Name="ToggleSwitchEnableTwoFingerRotation" Header="允许双指旋转" FontFamily="{DynamicResource AppFontFamily}" OnContent="开" OffContent="关" Toggled="ToggleSwitchEnableTwoFingerRotation_Toggled"/>
+                                <TextBlock Text="允许选中墨迹后对墨迹进行双指或多指缩放操作（此设置不受“允许双指旋转”设置的影响）" TextWrapping="Wrap" Foreground="{DynamicResource FluentTextSecondaryBrush}"/>
+                                <ui:ToggleSwitch Name="ToggleSwitchEnableTwoFingerRotationOnSelection" Header="允许双指旋转选中的墨迹" FontFamily="{DynamicResource AppFontFamily}" OnContent="开" OffContent="关" Toggled="ToggleSwitchEnableTwoFingerRotation_Toggled"/>
+                            </ui:SimpleStackPanel>
+                        </GroupBox>
+                        <GroupBox Name="GroupBoxInkRecognition" Header="墨迹识别 (Beta)">
+                            <ui:SimpleStackPanel Spacing="12">
+                                <TextBlock Text="墨迹识别功能目前处于开发阶段，目前可实现智能识别圆、三角形、&#x000A;矩形，并自动转换为规范图形。" Foreground="{DynamicResource FluentTextSecondaryBrush}"/>
+                                <ui:ToggleSwitch Name="ToggleSwitchEnableInkToShape" Header="启用墨迹识别" FontFamily="{DynamicResource AppFontFamily}" OnContent="开" OffContent="关" Toggled="ToggleSwitchEnableInkToShape_Toggled" IsOn="False"/>
+                            </ui:SimpleStackPanel>
+                        </GroupBox>
+                        <GroupBox Name="GroupBoxAppearance" Header="外观">
+                            <ui:SimpleStackPanel Spacing="12">
+                                <ui:ToggleSwitch Name="ToggleSwitchTransparentButtonBackground" Header="按钮背景半透明" IsOn="True" FontFamily="{DynamicResource AppFontFamily}" OnContent="开" OffContent="关" Toggled="ToggleSwitchTransparentButtonBackground_Toggled"/>
+                                <ui:ToggleSwitch Name="ToggleSwitchShowButtonExit" Header="显示“退出”按钮" IsOn="True" FontFamily="{DynamicResource AppFontFamily}" OnContent="开" OffContent="关" Toggled="ToggleSwitchShowButtonExit_Toggled"/>
+                                <ui:ToggleSwitch Name="ToggleSwitchShowButtonEraser" Header="显示“橡皮”按钮" IsOn="True" FontFamily="{DynamicResource AppFontFamily}" OnContent="开" OffContent="关" Toggled="ToggleSwitchShowButtonEraser_Toggled"/>
+                                <ui:ToggleSwitch Name="ToggleSwitchShowButtonHideControl" Header="显示“⇅ (显示或隐藏控制按钮)”按钮" IsOn="False" FontFamily="{DynamicResource AppFontFamily}" OnContent="开" OffContent="关" Toggled="ToggleSwitchShowButtonHideControl_Toggled"/>
+                                <ui:ToggleSwitch Name="ToggleSwitchShowButtonLRSwitch" Header="显示“⇆ (左右切换)”按钮" IsOn="False" FontFamily="{DynamicResource AppFontFamily}" OnContent="开" OffContent="关" Toggled="ToggleSwitchShowButtonLRSwitch_Toggled"/>
+                                <ui:ToggleSwitch Name="ToggleSwitchShowButtonModeFinger" Header="显示“手指模式”切换按钮" IsOn="True" FontFamily="{DynamicResource AppFontFamily}" OnContent="开" OffContent="关" Toggled="ToggleSwitchShowButtonModeFinger_Toggled"/>
+                                <DockPanel Visibility="Collapsed" LastChildFill="True">
+                                    <Border DockPanel.Dock="Right" MinWidth="42" Margin="12,16,0,0"
+                                            Background="{DynamicResource FluentControlFillBrush}"
+                                            BorderBrush="{DynamicResource FluentCardBorderBrush}" BorderThickness="1"
+                                            CornerRadius="4" Padding="6,2" HorizontalAlignment="Center">
+                                        <TextBlock Text="{Binding Value, ElementName=SideControlOpacitySlider, Mode=OneWay}"
+                                                   FontSize="14" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
+                                    <Slider x:Name="SideControlOpacitySlider"
+                                            HorizontalAlignment="Left"
+                                            Minimum="1" Maximum="100"
+                                            Width="320" FontFamily="{DynamicResource AppFontFamily}" 
+                                            ui:ControlHelper.Header="控制栏透明度"
+                                            IsSnapToTickEnabled="True" Value="100"
+                                            TickFrequency="10" TickPlacement="Both"
+                                            ValueChanged="SideControlOpacitySlider_ValueChanged"/>
+                                </DockPanel>
+                            </ui:SimpleStackPanel>
+                        </GroupBox>
+                        <GroupBox Name="GroupBoxAppearanceNewUI" Header="主题">
+                            <ui:SimpleStackPanel Spacing="12">
+                                <ui:ToggleSwitch Header="显示“橡皮”按钮" IsOn="{Binding ElementName=ToggleSwitchShowButtonEraser, Path=IsOn}" FontFamily="{DynamicResource AppFontFamily}" OnContent="开" OffContent="关"/>
+                                <ui:ToggleSwitch Name="ToggleSwitchShowButtonPPTNavigation" Header="显示 PPT 浏览切页按钮" IsOn="True" FontFamily="{DynamicResource AppFontFamily}" OnContent="开" OffContent="关" Toggled="ToggleSwitchShowButtonPPTNavigation_OnToggled"/>
+                                <TextBlock Text="翻页按钮位置（放映时屏幕两侧）" FontFamily="{DynamicResource AppFontFamily}" FontSize="14"/>
+                                <!-- iOS 分段控件：底部两侧 / 两侧竖直居中 -->
+                                <Border CornerRadius="8" Background="{DynamicResource FluentControlFillBrush}" Padding="3" HorizontalAlignment="Left" Width="300">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <RadioButton Name="RadioButtonPptNavPosBottom" Grid.Column="0" Content="两侧底部" Tag="0" IsChecked="True" GroupName="PptNavPosSegment" Style="{StaticResource SegmentItemStyle}" Checked="RadioButtonPptNavPosSegment_Checked"/>
+                                        <RadioButton Name="RadioButtonPptNavPosMiddle" Grid.Column="1" Content="两侧中部" Tag="1" GroupName="PptNavPosSegment" Style="{StaticResource SegmentItemStyle}" Checked="RadioButtonPptNavPosSegment_Checked"/>
+                                    </Grid>
+                                </Border>
+                                <ui:ToggleSwitch Name="ToggleSwitchPptThumbnail" Header="点击页数展开幻灯片缩略图" IsOn="True" FontFamily="{DynamicResource AppFontFamily}" OnContent="开" OffContent="关" Toggled="ToggleSwitchPptThumbnail_Toggled"/>
+                                <TextBlock Text="放映时点击翻页按钮中间的“页码”，即可展开本页缩略图总览并点击跳转到任意一页。" TextWrapping="Wrap" Foreground="{DynamicResource FluentTextSecondaryBrush}"/>
+                                <TextBlock Text="颜色主题" FontFamily="{DynamicResource AppFontFamily}" FontSize="14"/>
+                                <!-- iOS 分段控件：三段互斥，选中段抬升，替代原来的下拉框 -->
+                                <Border CornerRadius="8" Background="{DynamicResource FluentControlFillBrush}" Padding="3" HorizontalAlignment="Left" Width="300">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <RadioButton Name="RadioButtonThemeLight" Grid.Column="0" Content="浅色" Tag="0" IsChecked="True" GroupName="ThemeSegment" Style="{StaticResource SegmentItemStyle}" Checked="RadioButtonThemeSegment_Checked"/>
+                                        <RadioButton Name="RadioButtonThemeDark" Grid.Column="1" Content="深色" Tag="1" GroupName="ThemeSegment" Style="{StaticResource SegmentItemStyle}" Checked="RadioButtonThemeSegment_Checked"/>
+                                        <RadioButton Name="RadioButtonThemeSystem" Grid.Column="2" Content="跟随系统" Tag="2" GroupName="ThemeSegment" Style="{StaticResource SegmentItemStyle}" Checked="RadioButtonThemeSegment_Checked"/>
+                                    </Grid>
+                                </Border>
+                            </ui:SimpleStackPanel>
+                        </GroupBox>
+                        <GroupBox Header="PowerPoint 相关">
+                            <ui:SimpleStackPanel Spacing="12">
+                                <ui:ToggleSwitch Name="ToggleSwitchSupportPowerPoint" Header="Microsoft PowerPoint 支持" IsOn="True" FontFamily="{DynamicResource AppFontFamily}" OnContent="开" OffContent="关" Toggled="ToggleSwitchSupportPowerPoint_Toggled"/>
+                                <ui:ToggleSwitch Name="ToggleSwitchSupportWPS" Header="WPS Office 支持" IsOn="True" IsEnabled="True" FontFamily="{DynamicResource AppFontFamily}" OnContent="开" OffContent="关" Toggled="ToggleSwitchSupportWPS_Toggled"/>
+                                <ui:ToggleSwitch Name="ToggleSwitchShowCanvasAtNewSlideShow" Header="开始放映时自动启动画板" IsOn="True" FontFamily="{DynamicResource AppFontFamily}" OnContent="开" OffContent="关" Toggled="ToggleSwitchShowCanvasAtNewSlideShow_Toggled"/>
+                                <ui:ToggleSwitch Name="ToggleSwitchEnableTwoFingerGestureInPresentationMode" Header="允许幻灯片模式下的双指手势" FontFamily="{DynamicResource AppFontFamily}" OnContent="开" OffContent="关" Toggled="ToggleSwitchEnableTwoFingerGestureInPresentationMode_Toggled"/>
+                                <TextBlock Text="允许开启画板时使用手指手势进行幻灯片翻页（启用后，在幻灯片放映模式下，当画板无墨迹时，使用手指（笔尖或手掌无法识别）左右滑动即可控制幻灯片翻页。）" TextWrapping="Wrap" Foreground="{DynamicResource FluentTextSecondaryBrush}"/>
+                                <ui:ToggleSwitch Name="ToggleSwitchEnableFingerGestureSlideShowControl" Header="允许使用手指手势进行幻灯片翻页" FontFamily="{DynamicResource AppFontFamily}" OnContent="开" OffContent="关" IsOn="True" Toggled="ToggleSwitchEnableFingerGestureSlideShowControl_Toggled"/>
+                                <ui:ToggleSwitch Name="ToggleSwitchAutoSaveScreenShotInPowerPoint" Header="自动幻灯片截屏" IsOn="True" FontFamily="{DynamicResource AppFontFamily}" OnContent="开" OffContent="关" Toggled="ToggleSwitchAutoSaveScreenShotInPowerPoint_Toggled"/>
+                                <TextBlock Text="开启后将在结束幻灯片放映时自动将已有墨迹保存至此电脑，并在下次打开时自动加载（文件名和幻灯片页数都要相同）" TextWrapping="Wrap" Foreground="{DynamicResource FluentTextSecondaryBrush}"/>
+                                <ui:ToggleSwitch Name="ToggleSwitchAutoSaveStrokesInPowerPoint" Header="自动保存幻灯片墨迹" IsOn="True" FontFamily="{DynamicResource AppFontFamily}" OnContent="开" OffContent="关" Toggled="ToggleSwitchAutoSaveStrokesInPowerPoint_Toggled"/>
+                                <ui:ToggleSwitch Name="ToggleSwitchNotifyPreviousPage" Header="记忆并提示上次播放位置" IsOn="False" FontFamily="{DynamicResource AppFontFamily}" OnContent="开" OffContent="关" Toggled="ToggleSwitchNotifyPreviousPage_Toggled"/>
+                                <!-- 检测到隐藏幻灯片默认无需提醒：与 Settings.PowerPointSettings.IsNotifyHiddenPage 的默认值 false 保持一致 -->
+                                <ui:ToggleSwitch Name="ToggleSwitchNotifyHiddenPage" Header="提示隐藏幻灯片" IsOn="False" FontFamily="{DynamicResource AppFontFamily}" OnContent="开" OffContent="关" Toggled="ToggleSwitchNotifyHiddenPage_Toggled"/>
+
+                                <ui:ToggleSwitch Name="ToggleSwitchNoStrokeClearInPowerPoint" Header="退出画板模式时不清除笔迹" IsOn="True" FontFamily="{DynamicResource AppFontFamily}" OnContent="开" OffContent="关" Toggled="ToggleSwitchNoStrokeClearInPowerPoint_Toggled"/>
+                                <ui:ToggleSwitch Name="ToggleSwitchShowStrokeOnSelectInPowerPoint" Header="退出画板模式时不隐藏笔迹" IsOn="False" FontFamily="{DynamicResource AppFontFamily}" OnContent="开" OffContent="关" Toggled="ToggleSwitchShowStrokeOnSelectInPowerPoint_Toggled"/>
+                            </ui:SimpleStackPanel>
+
+                        </GroupBox>
+                        <GroupBox Header="高级">
+                            <ui:SimpleStackPanel Spacing="12">
+                                <ui:ToggleSwitch Name="ToggleSwitchIsEnableTouchAreaEraser" Header="识别触摸面积为橡皮擦" FontFamily="{DynamicResource AppFontFamily}" OnContent="开" OffContent="关" IsOn="False" Toggled="ToggleSwitchIsEnableTouchAreaEraser_Toggled"/>
+                                <TextBlock Text="开启后，手掌或大面积触摸会被自动当作橡皮擦；默认关闭，仅通过“橡皮”按钮或笔尾按键擦除" TextWrapping="Wrap" Foreground="{DynamicResource FluentTextSecondaryBrush}"/>
+                                <TextBlock Text="可在手指触摸画板时显示圆形橡皮或手掌触摸画板时显示的橡皮比&#x000A;手掌大很多时调整" Foreground="{DynamicResource FluentTextSecondaryBrush}"/>
+                                <StackPanel Orientation="Horizontal">
+                                    <Slider x:Name="EraserTouchThresholdSlider"
+                                            HorizontalAlignment="Left"
+                                            Minimum="3" Maximum="40"
+                                            Width="300" FontFamily="{DynamicResource AppFontFamily}"
+                                            ui:ControlHelper.Header="橡皮擦识别灵敏度（接触面积阈值，越大越不易误擦）"
+                                            IsSnapToTickEnabled="True"
+                                            TickFrequency="1" TickPlacement="Both"
+                                            ValueChanged="EraserTouchThresholdSlider_ValueChanged"/>
+                                    <TextBlock Text="{Binding Value, ElementName=EraserTouchThresholdSlider, Mode=OneWay}"
+                                               VerticalAlignment="Bottom" Margin="10,0,0,8"
+                                               FontSize="14" Width="30" HorizontalAlignment="Center"/>
+                                </StackPanel>
+                                <ui:ToggleSwitch Name="ToggleSwitchIsSpecialScreen" Header="特殊屏幕模式" FontFamily="{DynamicResource AppFontFamily}" OnContent="开" OffContent="关" Toggled="ToggleSwitchIsSpecialScreen_OnToggled"/>
+                                <StackPanel Orientation="Horizontal" Visibility="{Binding Visibility,ElementName=TouchMultiplierSlider}">
+                                    <Slider x:Name="TouchMultiplierSlider"
+                                            HorizontalAlignment="Left"
+                                            Minimum="0" Maximum="1"
+                                            Width="300" FontFamily="{DynamicResource AppFontFamily}" 
+                                            ui:ControlHelper.Header="触摸大小倍数"
+                                            IsSnapToTickEnabled="True"
+                                            TickFrequency="0.05" TickPlacement="Both"
+                                            ValueChanged="TouchMultiplierSlider_ValueChanged"
+                                            Visibility="Collapsed"/>
+                                    <TextBlock Text="{Binding Value, ElementName=TouchMultiplierSlider, Mode=OneWay}"
+                                               VerticalAlignment="Bottom" Margin="10,0,0,8"
+                                               FontSize="14" Width="30" HorizontalAlignment="Center"
+                                               Visibility="{Binding Path=Visibility, ElementName=TouchMultiplierSlider, Mode=OneWay}"/>
+                                </StackPanel>
+
+                                <ui:SimpleStackPanel Spacing="8" Margin="0,4,0,4" Visibility="{Binding Visibility,ElementName=TouchMultiplierSlider}">
+                                    <TextBlock FontSize="14" Text="在下方用笔尖点击以估计触摸大小倍数"/>
+                                    <TextBlock Text="数值仅供参考" Foreground="{DynamicResource FluentTextSecondaryBrush}"/>
+                                    <Border CornerRadius="4" Height="48" Background="#cccccc" TouchDown="BorderCalculateMultiplier_TouchDown"/>
+                                    <TextBlock Name="TextBlockShowCalculatedMultiplier" FontSize="14"/>
+                                </ui:SimpleStackPanel>
+
+                                <ui:ToggleSwitch Name="ToggleSwitchEraserBindTouchMultiplier" Header="橡皮擦绑定触摸大小倍数" FontFamily="{DynamicResource AppFontFamily}" OnContent="开" OffContent="关" IsOn="False" Toggled="ToggleSwitchEraserBindTouchMultiplier_Toggled" Visibility="{Binding Path=Visibility, ElementName=TouchMultiplierSlider, Mode=OneWay}"/>
+                                <ui:ToggleSwitch Name="ToggleSwitchIsQuadIR" Header="四边红外模式" FontFamily="{DynamicResource AppFontFamily}" OnContent="开" OffContent="关" Toggled="ToggleSwitchIsQuadIR_Toggled"/>
+                                <ui:ToggleSwitch Name="ToggleSwitchIsLogEnabled" Header="记录日志" FontFamily="{DynamicResource AppFontFamily}" OnContent="开" OffContent="关" IsOn="True" Toggled="ToggleSwitchIsLogEnabled_Toggled"/>
+                            </ui:SimpleStackPanel>
+                        </GroupBox>
+                        <GroupBox Header="重置">
+                            <ui:SimpleStackPanel Spacing="12">
+                                <StackPanel>
+                                    <TextBlock FontSize="14" Margin="0,0,0,12"
+                                        Text="重置设置为推荐设置"/>
+                                    <ui:SimpleStackPanel Orientation="Horizontal" Spacing="12">
+                                        <Button Content="重置" MinWidth="100" Style="{StaticResource SettingsActionButtonStyle}" FontFamily="{DynamicResource AppFontFamily}" Click="BtnResetToSuggestion_Click"/>
+                                        <local:AppIcon x:Name="SymbolIconResetSuggestionComplete" Glyph="Accept" Visibility="Collapsed"/>
+                                    </ui:SimpleStackPanel>
+                                </StackPanel>
+                                <StackPanel>
+                                    <TextBlock FontSize="14" Margin="0,0,0,12"
+                                        Text="重置设置为默认设置"/>
+                                    <ui:SimpleStackPanel Orientation="Horizontal" Spacing="12">
+                                        <Button Content="重置" MinWidth="100" Style="{StaticResource SettingsActionButtonStyle}" FontFamily="{DynamicResource AppFontFamily}" Click="BtnResetToDefault_Click"/>
+                                        <local:AppIcon x:Name="SymbolIconResetDefaultComplete" Glyph="Accept" Visibility="Collapsed"/>
+                                    </ui:SimpleStackPanel>
+                                </StackPanel>
+                            </ui:SimpleStackPanel>
+                        </GroupBox>
+                        <GroupBox Header="自动">
+                            <ui:SimpleStackPanel Spacing="12">
+                                <ui:ToggleSwitch Name="ToggleSwitchAutoSaveStrokesAtScreenshot" Header="截图时自动保存墨迹" IsOn="False" FontFamily="{DynamicResource AppFontFamily}" OnContent="开" OffContent="关" Toggled="ToggleSwitchAutoSaveStrokesAtScreenshot_Toggled"/>
+                                <ui:ToggleSwitch Name="ToggleSwitchAutoSaveStrokesAtClear" Header="清屏时自动截图" IsOn="False" FontFamily="{DynamicResource AppFontFamily}" OnContent="开" OffContent="关" Toggled="ToggleSwitchAutoSaveStrokesAtClear_Toggled"/>
+                                <ui:ToggleSwitch Name="ToggleSwitchClearExitingWritingMode" Header="切换到鼠标模式后自动清屏" IsOn="False" FontFamily="{DynamicResource AppFontFamily}" OnContent="开" OffContent="关" Toggled="ToggleSwitchExitingWritingMode_Toggled"/>
+                                <ui:ToggleSwitch Name="ToggleSwitchAutoKillPptService" Header="自动查杀“PPT 小工具”" IsOn="True" FontFamily="{DynamicResource AppFontFamily}" OnContent="开" OffContent="关" Toggled="ToggleSwitchAutoKillPptService_Toggled"/>
+                                <ui:ToggleSwitch Name="ToggleSwitchAutoKillEasiNote" Header="自动查杀“希沃白板 5”" IsOn="False" FontFamily="{DynamicResource AppFontFamily}" OnContent="开" OffContent="关" Toggled="ToggleSwitchAutoKillEasiNote_Toggled"/>
+                                <DockPanel LastChildFill="True">
+                                    <Border DockPanel.Dock="Right" MinWidth="42" Margin="12,16,0,0"
+                                            Background="{DynamicResource FluentControlFillBrush}"
+                                            BorderBrush="{DynamicResource FluentCardBorderBrush}" BorderThickness="1"
+                                            CornerRadius="4" Padding="6,2" HorizontalAlignment="Center">
+                                        <TextBlock Text="{Binding Value, ElementName=SideControlMinimumAutomationSlider, Mode=OneWay}"
+                                                   FontSize="14" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
+                                    <Slider x:Name="SideControlMinimumAutomationSlider"
+                                            HorizontalAlignment="Left"
+                                            Minimum="0" Maximum="10"
+                                            Width="320" FontFamily="{DynamicResource AppFontFamily}" 
+                                            ui:ControlHelper.Header="自动截图最小墨迹量"
+                                            IsSnapToTickEnabled="True" Value="0"
+                                            TickFrequency="1" TickPlacement="Both"
+                                            ValueChanged="SideControlMinimumAutomationSlider_ValueChanged"/>
+                                </DockPanel>
+                            </ui:SimpleStackPanel>
+                        </GroupBox>
+                        <GroupBox Header="开源参考项目列表">
+                            <ui:SimpleStackPanel Spacing="4">
+                                <TextBlock FontSize="13" TextWrapping="Wrap" Margin="0,0,0,8"
+                                           Text="本项目在开发过程中参考了下列开源项目，后续会继续补充。"/>
+                                <ItemsControl ItemsSource="{x:Static h:OpenSourceReferences.All}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Margin="0,0,0,10">
+                                                <TextBlock FontSize="14">
+                                                    <Hyperlink Foreground="{DynamicResource FluentAccentFillBrush}"
+                                                               NavigateUri="{Binding Url}"
+                                                               RequestNavigate="Hyperlink_RequestNavigate"><Run Text="{Binding Name, Mode=OneWay}"/></Hyperlink>
+                                                </TextBlock>
+                                                <TextBlock FontSize="12" TextWrapping="Wrap"
+                                                           Foreground="{DynamicResource FluentTextSecondaryBrush}"
+                                                           Text="{Binding Description, Mode=OneWay}"/>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </ui:SimpleStackPanel>
+                        </GroupBox>
+                    </StackPanel>
+                </ui:ScrollViewerEx>
+                <Grid Background="#FFF3F3F3" Margin="10,0,10,0" Height="60" VerticalAlignment="Top">
+                    <Grid Margin="10,20,10,-10">
+                        <TextBlock Text="设置" FontSize="26" FontWeight="SemiBold" Margin="0,0,0,12"/>
+                        <!--<Viewbox Margin="0,-55,0,0" Height="60" HorizontalAlignment="Right">
+                        <StackPanel Orientation="Horizontal">
+                            <Image Source="logo.png" Width="120"/>
+                            <Image Source="text.png" Width="200"/>
+                        </StackPanel>
+                    </Viewbox>-->
+
+                    </Grid>
+                </Grid>
+                <Grid VerticalAlignment="Bottom" Height="50">
+                    <Button FontFamily="{DynamicResource AppFontFamily}"
+                            MinWidth="100" Margin="10"
+                            HorizontalAlignment="Right"
+                            Content="关闭"
+                            Click="BtnSettings_Click"/>
+                </Grid>
+            </Grid>
+        </Border>
+
+        <Grid Name="GridNotifications" Margin="0,110" Visibility="Collapsed" HorizontalAlignment="Center" VerticalAlignment="Bottom">
+            <Border CornerRadius="25" Height="50" Background="LightGray" Opacity="0.85">
+                <TextBlock Name="TextBlockNotice" Text="测试文本" Margin="20,0" VerticalAlignment="Center" HorizontalAlignment="Center" FontSize="16"/>
+            </Border>
+        </Grid>
+
+        <Viewbox Name="ViewBoxStackPanelMain" Visibility="Visible" CacheMode="BitmapCache" Margin="10,10,10,55" HorizontalAlignment="Right" VerticalAlignment="Bottom" Width="46">
+            <!-- 46px 窄条里，Fluent 默认的 14px 字号 + 12px 横向内边距会把两行中文裁掉 -->
+            <Viewbox.Resources>
+                <Style TargetType="{x:Type Button}" BasedOn="{StaticResource {x:Type Button}}">
+                    <Setter Property="FontSize" Value="12"/>
+                    <Setter Property="Padding" Value="2,4"/>
+                </Style>
+            </Viewbox.Resources>
+            <StackPanel Name="StackPanelMain" Width="46">
+                <StackPanel Name="StackPanelControl">
+                    <Button Name="BtnExit" Content="退出" FontFamily="{DynamicResource AppFontFamily}"
+                        Margin="0,10,0,0" Width="{Binding ElementName=StackPanelMain, Path=ActualWidth}"
+                        Click="BtnExit_Click" Background="{DynamicResource FluentControlFillBrush}"/>
+                    <TextBlock Text="自动&#x000A;粗细" Visibility="Collapsed" Margin="0,10,0,0"
+                           FontSize="14" HorizontalAlignment="Center"
+                           Foreground="{Binding ElementName=BtnExit, Path=Foreground}"/>
+                    <!--<Viewbox Height="30" Visibility="Collapsed">
+                        <ui:ToggleSwitch Name="ToggleSwitchAutoWeight" Header="" Width="40.5" 
+                                     FontFamily="{DynamicResource AppFontFamily}" FontSize="19"
+                                     OnContent="" OffContent="" Toggled="ToggleSwitchAutoWeight_Toggled"/>
+                    </Viewbox>-->
+                    <StackPanel Name="StackPanelModeFinger" Background="#01000000">
+                        <TextBlock Text="手指&#x000A;模式" Margin="0,10,0,0"
+                           FontSize="14" HorizontalAlignment="Center"
+                           Foreground="{Binding ElementName=BtnExit, Path=Foreground}"/>
+                        <Viewbox Height="30">
+                            <ui:ToggleSwitch Name="ToggleSwitchModeFinger" Header="" Width="40.5"
+                                     FontFamily="{DynamicResource AppFontFamily}" FontSize="19"
+                                     OnContent="" OffContent="" Toggled="ToggleSwitchModeFinger_Toggled"/>
+                        </Viewbox>
+                    </StackPanel>
+                    <Button Name="BtnThickness" Content="粗细" Visibility="Collapsed" FontFamily="{DynamicResource AppFontFamily}"
+                        Margin="0,10,0,0" Width="{Binding ElementName=StackPanelMain, Path=ActualWidth}"
+                        Click="BtnThickness_Click" Foreground="{Binding ElementName=BtnExit, Path=Foreground}" Background="{Binding ElementName=BtnExit, Path=Background}"/>
+                    <Button Name="BtnSwitchTheme" Content="深色" FontFamily="{DynamicResource AppFontFamily}"
+                        Margin="0,10,0,0" Width="{Binding ElementName=StackPanelMain, Path=ActualWidth}"
+                        Click="BtnSwitchTheme_Click" Foreground="{Binding ElementName=BtnExit, Path=Foreground}" Background="{Binding ElementName=BtnExit, Path=Background}"/>
+                    <Button Name="BtnSwitch" Content="背景" FontFamily="{DynamicResource AppFontFamily}"
+                        Margin="0,10,0,0" Width="{Binding ElementName=StackPanelMain, Path=ActualWidth}"
+                        Click="BtnSwitch_Click" Foreground="{Binding ElementName=BtnExit, Path=Foreground}" Background="{Binding ElementName=BtnExit, Path=Background}"/>
+                    <StackPanel Name="StackPanelColors" Margin="7,0,7,0">
+                        <Button Name="BtnColorBlack" FontFamily="{DynamicResource AppFontFamily}" Background="Black"
+                                Margin="0,10,0,0" Width="{Binding ElementName=StackPanelColors, Path=ActualWidth}"
+                                Height="{Binding ElementName=StackPanelColors, Path=ActualWidth}"
+                                Click="BtnColorBlack_Click">
+                            <Viewbox Name="ViewboxBtnColorBlackContent" Opacity="0">
+                                <local:AppIcon Glyph="Accept" x:Name="SymbolIconBtnColorBlackContent" Foreground="White"/>
+                            </Viewbox>
+                        </Button>
+                        <Button Name="BtnColorRed" FontFamily="{DynamicResource AppFontFamily}" Background="Red"
+                                Margin="0,10,0,0" Width="{Binding ElementName=StackPanelColors, Path=ActualWidth}"
+                                Height="{Binding ElementName=StackPanelColors, Path=ActualWidth}"
+                                Click="BtnColorRed_Click" Foreground="{Binding ElementName=BtnExit, Path=Foreground}">
+                            <Viewbox Name="ViewboxBtnColorRedContent">
+                                <local:AppIcon Glyph="Accept" Foreground="{Binding ElementName=SymbolIconBtnColorBlackContent, Path=Foreground}"/>
+                            </Viewbox>
+                        </Button>
+                        <Button Name="BtnColorGreen" FontFamily="{DynamicResource AppFontFamily}" Background="#169141"
+                                Margin="0,10,0,0" Width="{Binding ElementName=StackPanelColors, Path=ActualWidth}"
+                                Height="{Binding ElementName=StackPanelColors, Path=ActualWidth}"
+                                Click="BtnColorGreen_Click" Foreground="{Binding ElementName=BtnExit, Path=Foreground}">
+                            <Viewbox Name="ViewboxBtnColorGreenContent" Opacity="0">
+                                <local:AppIcon Glyph="Accept" Foreground="{Binding ElementName=SymbolIconBtnColorBlackContent, Path=Foreground}"/>
+                            </Viewbox>
+                        </Button>
+                        <Button Name="BtnColorBlue" FontFamily="{DynamicResource AppFontFamily}" Background="#239AD6"
+                                Margin="0,10,0,0" Width="{Binding ElementName=StackPanelColors, Path=ActualWidth}"
+                                Height="{Binding ElementName=StackPanelColors, Path=ActualWidth}"
+                                Click="BtnColorBlue_Click" Foreground="{Binding ElementName=BtnExit, Path=Foreground}">
+                            <Viewbox Name="ViewboxBtnColorBlueContent" Opacity="0">
+                                <local:AppIcon Glyph="Accept" Foreground="{Binding ElementName=SymbolIconBtnColorBlackContent, Path=Foreground}"/>
+                            </Viewbox>
+                        </Button>
+                        <Button Name="BtnColorYellow" FontFamily="{DynamicResource AppFontFamily}" Background="#F38B00"
+                                Margin="0,10,0,0" Width="{Binding ElementName=StackPanelColors, Path=ActualWidth}"
+                                Height="{Binding ElementName=StackPanelColors, Path=ActualWidth}"
+                                Click="BtnColorYellow_Click" Foreground="{Binding ElementName=BtnExit, Path=Foreground}">
+                            <Viewbox Name="ViewboxBtnColorYellowContent" Opacity="0">
+                                <local:AppIcon Glyph="Accept" Foreground="{Binding ElementName=SymbolIconBtnColorBlackContent, Path=Foreground}"/>
+                            </Viewbox>
+                        </Button>
+                    </StackPanel>
+                    <Button Name="BtnClear" Content="清屏" FontFamily="{DynamicResource AppFontFamily}"
+                            Margin="0,10,0,0" Width="{Binding ElementName=StackPanelMain, Path=ActualWidth}"
+                            Click="BtnClear_Click" MouseDoubleClick="BtnClear_MouseDoubleClick" Foreground="{Binding ElementName=BtnExit, Path=Foreground}" Background="{Binding ElementName=BtnExit, Path=Background}"/>
+                    <Button x:Name="BtnHidePainterCanvas" Content="隐藏&#x000A;画板" FontFamily="{DynamicResource AppFontFamily}"
+                            Margin="0,10,0,0" Width="{Binding ElementName=StackPanelMain, Path=ActualWidth}"
+                            Click="BtnHidePainterCanvas_Click" Foreground="{Binding ElementName=BtnExit, Path=Foreground}" Background="{Binding ElementName=BtnExit, Path=Background}"/>
+                    <Button x:Name="BtnTools" Content="工具" FontFamily="{DynamicResource AppFontFamily}"
+                            Margin="0,10,0,0" Width="{Binding ElementName=StackPanelMain, Path=ActualWidth}"
+                            Click="BtnTools_Click" Foreground="{Binding ElementName=BtnExit, Path=Foreground}" Background="{Binding ElementName=BtnExit, Path=Background}"/>
+                    <Grid Name="StackPanelToolButtons" Margin="-127,-30.5,56,0">
+                        <Border CornerRadius="8" Margin="-7"
+                                Background="{DynamicResource FluentCardBackgroundBrush}" Visibility="Collapsed"
+                                BorderBrush="{DynamicResource FluentAccentFillBrush}" BorderThickness="1"/>
+                        <ui:SimpleStackPanel  Orientation="Horizontal" Spacing="10">
+                            <Button x:Name="BtnRand" Content="抽奖" FontFamily="{DynamicResource AppFontFamily}"
+                                    Margin="0,0,0,0"
+                                    Click="BtnRand_Click" Foreground="{Binding ElementName=BtnExit, Path=Foreground}" Background="{Binding ElementName=BtnExit, Path=Background}"/>
+                        </ui:SimpleStackPanel>
+                    </Grid>
+                    <Button x:Name="BtnCheckPPT" Visibility="Collapsed" Content="检查" FontFamily="{DynamicResource AppFontFamily}"
+                            Margin="0,10,0,0" Width="{Binding ElementName=StackPanelMain, Path=ActualWidth}"
+                            Click="BtnCheckPPT_Click" Foreground="{Binding ElementName=BtnExit, Path=Foreground}" Background="{Binding ElementName=BtnExit, Path=Background}"/>
+                    <StackPanel Name="StackPanelPPTButtons">
+                        <Button x:Name="BtnPPTSlideShow" Visibility="Collapsed" Content="从头&#x000A;放映" FontFamily="{DynamicResource AppFontFamily}"
+                                Margin="0,10,0,0" Width="{Binding ElementName=StackPanelMain, Path=ActualWidth}"
+                                Click="BtnPPTSlideShow_Click"  Foreground="{Binding ElementName=BtnExit, Path=Foreground}" Background="{Binding ElementName=BtnExit, Path=Background}"/>
+                        <Button x:Name="BtnPPTSlideShowEnd" Visibility="Collapsed" Content="结束&#x000A;放映" FontFamily="{DynamicResource AppFontFamily}"
+                                Margin="0,10,0,0" Width="{Binding ElementName=StackPanelMain, Path=ActualWidth}"
+                                Click="BtnPPTSlideShowEnd_Click"  Foreground="{Binding ElementName=BtnExit, Path=Foreground}" Background="{Binding ElementName=BtnExit, Path=Background}"/>
+                        <StackPanel Name="StackPanelPPTControls" Visibility="Collapsed">
+                            <Button x:Name="BtnPPTSlidesUp" FontFamily="{DynamicResource AppFontFamily}"
+                                    Margin="0,10,0,0" Width="{Binding ElementName=StackPanelMain, Path=ActualWidth}"
+                                    Click="BtnPPTSlidesUp_Click" Foreground="{Binding ElementName=BtnExit, Path=Foreground}" Background="{Binding ElementName=BtnExit, Path=Background}">
+                                <local:AppIcon Glyph="ChevronUp"/>
+                            </Button>
+                            <Button x:Name="BtnPPTSlidesDown" FontFamily="{DynamicResource AppFontFamily}"
+                                    Margin="0,10,0,0" Width="{Binding ElementName=StackPanelMain, Path=ActualWidth}"
+                                    Click="BtnPPTSlidesDown_Click" Foreground="{Binding ElementName=BtnExit, Path=Foreground}" Background="{Binding ElementName=BtnExit, Path=Background}">
+                                <local:AppIcon Glyph="ChevronDown"/>
+                            </Button>
+                        </StackPanel>
+                    </StackPanel>
+                    <Button x:Name="BtnSwitchSide" FontFamily="{DynamicResource AppFontFamily}"
+                            Margin="0,10,0,0" Width="{Binding ElementName=StackPanelMain, Path=ActualWidth}"
+                            Click="BtnSwitchSide_Click" Foreground="{Binding ElementName=BtnExit, Path=Foreground}" Background="{Binding ElementName=BtnExit, Path=Background}">
+                        <local:AppIcon Glyph="SwapHorizontal"/>
+                    </Button>
+                </StackPanel>
+                <Button x:Name="BtnHideControl" FontFamily="{DynamicResource AppFontFamily}"
+                        Margin="0,10,0,0" Width="{Binding ElementName=StackPanelMain, Path=ActualWidth}"
+                        Click="BtnHideControl_Click" Foreground="{Binding ElementName=BtnExit, Path=Foreground}" Background="{Binding ElementName=BtnExit, Path=Background}">
+                    <local:AppIcon Glyph="ChevronUpDown"/>
+                </Button>
+                <StackPanel>
+                    <StackPanel x:Name="StackPanelInfo">
+                        <TextBlock Text="Developer" FontSize="8.5" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,10,0,0" Foreground="{Binding ElementName=BtnExit, Path=Foreground}"/>
+                        <TextBlock Text="XY Wang" FontSize="9" HorizontalAlignment="Center" Margin="0,3,0,0" Foreground="{Binding ElementName=BtnExit, Path=Foreground}"/>
+                    </StackPanel>
+                </StackPanel>
+            </StackPanel>
+        </Viewbox>
+        <Viewbox Name="ViewBoxStackPanelShapes" Margin="{Binding ElementName=ViewBoxStackPanelMain, Path=Margin}" Width="46" CacheMode="BitmapCache" HorizontalAlignment="Left" VerticalAlignment="Bottom" Visibility="Visible">
+            <Viewbox.Resources>
+                <Style TargetType="{x:Type Button}" BasedOn="{StaticResource {x:Type Button}}">
+                    <Setter Property="FontSize" Value="12"/>
+                    <Setter Property="Padding" Value="2,4"/>
+                </Style>
+            </Viewbox.Resources>
+            <StackPanel Name="StackPanelShapes" Width="46">
+                <Slider HorizontalAlignment="Center" Visibility="Collapsed"
+                        Minimum="1" Maximum="20" Orientation="Vertical" 
+                        Height="330" FontFamily="{DynamicResource AppFontFamily}" 
+                        ui:ControlHelper.Header="画笔&#x000A;粗细"
+                        IsSnapToTickEnabled="True"
+                        TickFrequency="1" TickPlacement="Both" 
+                        RenderTransformOrigin="0.5,0.5"
+                        Value="{Binding ElementName=InkWidthSlider, Path=Value, Mode=TwoWay}">
+                </Slider>
+                <TextBlock Text="画笔&#x000A;粗细" Foreground="{Binding ElementName=BtnExit, Path=Foreground}"
+                           FontSize="14" Margin="0,10,0,0" HorizontalAlignment="Center"/>
+                <Button Name="BtnPenWidthIncrease" Visibility="Visible" FontFamily="{DynamicResource AppFontFamily}"
+                        Margin="0,10,0,5" Height="{Binding ElementName=BtnPen, Path=ActualHeight}" Width="{Binding ElementName=StackPanelMain, Path=ActualWidth}"
+                        Click="BtnPenWidthIncrease_Click" Foreground="{Binding ElementName=BtnExit, Path=Foreground}"
+                        Background="{Binding ElementName=BtnExit, Path=Background}">
+                    <local:AppIcon Glyph="ChevronUp" Width="16" Height="16"/>
+                </Button>
+                <TextBlock Visibility="Visible" Text="{Binding Value, ElementName=InkWidthSlider, Mode=OneWay}"
+                           FontSize="14" HorizontalAlignment="Center" Foreground="{Binding ElementName=BtnExit, Path=Foreground}"/>
+                <Button Name="BtnPenWidthDecrease" Visibility="Visible" FontFamily="{DynamicResource AppFontFamily}"
+                        Margin="0,5,0,0" Height="{Binding ElementName=BtnPen, Path=ActualHeight}" Width="{Binding ElementName=StackPanelMain, Path=ActualWidth}"
+                        Click="BtnPenWidthDecrease_Click" Foreground="{Binding ElementName=BtnExit, Path=Foreground}"
+                        Background="{Binding ElementName=BtnExit, Path=Background}">
+                    <local:AppIcon Glyph="ChevronDown" Width="16" Height="16"/>
+                </Button>
+                <Button Name="BtnFingerDragMode" Content="单指&#x000A;拖动" Visibility="Visible" FontFamily="{DynamicResource AppFontFamily}"
+                        Margin="0,25,0,0" Width="{Binding ElementName=StackPanelMain, Path=ActualWidth}"
+                        Click="BtnFingerDragMode_Click" Foreground="{Binding ElementName=BtnExit, Path=Foreground}" Background="{Binding ElementName=BtnExit, Path=Background}"/>
+                <Button Name="BtnSelect" Content="选择&#x000A;墨迹" Visibility="Visible" FontFamily="{DynamicResource AppFontFamily}"
+                        Margin="0,10,0,0" Width="{Binding ElementName=StackPanelMain, Path=ActualWidth}"
+                        Click="BtnSelect_Click" Foreground="{Binding ElementName=BtnExit, Path=Foreground}" Background="{Binding ElementName=BtnExit, Path=Background}"/>
+                <Button Name="BtnPen" Visibility="Visible" FontFamily="{DynamicResource AppFontFamily}"
+                        Margin="0,10,0,0" Width="{Binding ElementName=StackPanelMain, Path=ActualWidth}"
+                        Click="BtnPen_Click" Foreground="{Binding ElementName=BtnExit, Path=Foreground}" Background="{Binding ElementName=BtnExit, Path=Background}">
+                    <local:AppIcon Glyph="Edit"/>
+                </Button>
+                <Button Name="BtnErase" Content="橡皮" Visibility="Visible" FontFamily="{DynamicResource AppFontFamily}"
+                        Margin="0,10,0,0" Width="{Binding ElementName=StackPanelMain, Path=ActualWidth}"
+                        Click="BtnErase_Click" Foreground="{Binding ElementName=BtnExit, Path=Foreground}" Background="{Binding ElementName=BtnExit, Path=Background}"/>
+                <Button Name="BtnDrawLine" Content="直线" Visibility="Visible" FontFamily="{DynamicResource AppFontFamily}"
+                        Margin="0,25,0,0" Width="{Binding ElementName=StackPanelMain, Path=ActualWidth}"
+                        Click="BtnDrawLine_Click" Foreground="{Binding ElementName=BtnExit, Path=Foreground}" Background="{Binding ElementName=BtnExit, Path=Background}"/>
+                <Button Name="BtnDrawArrow" Content="箭头" Visibility="Visible" FontFamily="{DynamicResource AppFontFamily}"
+                        Margin="0,10,0,0" Width="{Binding ElementName=StackPanelMain, Path=ActualWidth}"
+                        Click="BtnDrawArrow_Click" Foreground="{Binding ElementName=BtnExit, Path=Foreground}" Background="{Binding ElementName=BtnExit, Path=Background}"/>
+                <Button Name="BtnDrawRectangle" Content="矩形" Visibility="Visible" FontFamily="{DynamicResource AppFontFamily}"
+                        Margin="0,10,0,0" Width="{Binding ElementName=StackPanelMain, Path=ActualWidth}"
+                        Click="BtnDrawRectangle_Click" Foreground="{Binding ElementName=BtnExit, Path=Foreground}" Background="{Binding ElementName=BtnExit, Path=Background}"/>
+                <Button Name="BtnDrawEllipse" Content="椭圆" Visibility="Visible" FontFamily="{DynamicResource AppFontFamily}"
+                        Margin="0,10,0,15" Width="{Binding ElementName=StackPanelMain, Path=ActualWidth}"
+                        Click="BtnDrawEllipse_Click" Foreground="{Binding ElementName=BtnExit, Path=Foreground}" Background="{Binding ElementName=BtnExit, Path=Background}"/>
+                <StackPanel IsVisibleChanged="StackPanel_IsVisibleChanged" Visibility="{Binding ElementName=StackPanelPPTButtons, Path=Visibility}">
+                    <StackPanel Visibility="{Binding ElementName=StackPanelPPTControls, Path=Visibility}">
+                        <Button FontFamily="{DynamicResource AppFontFamily}"
+                            Margin="0,10,0,0" Width="{Binding ElementName=StackPanelMain, Path=ActualWidth}"
+                            Click="BtnPPTSlidesUp_Click" Foreground="{Binding ElementName=BtnExit, Path=Foreground}" Background="{Binding ElementName=BtnExit, Path=Background}">
+                            <local:AppIcon Glyph="ChevronUp"/>
+                        </Button>
+                        <Button FontFamily="{DynamicResource AppFontFamily}"
+                            Margin="0,10,0,15" Width="{Binding ElementName=StackPanelMain, Path=ActualWidth}"
+                            Click="BtnPPTSlidesDown_Click" Foreground="{Binding ElementName=BtnExit, Path=Foreground}" Background="{Binding ElementName=BtnExit, Path=Background}">
+                            <local:AppIcon Glyph="ChevronDown"/>
+                        </Button>
+                    </StackPanel>
+                </StackPanel>
+                <Button Content="清屏" FontFamily="{DynamicResource AppFontFamily}"
+                        Margin="0,10,0,0" Width="{Binding ElementName=StackPanelMain, Path=ActualWidth}"
+                        Click="BtnClear_Click" MouseDoubleClick="BtnClear_MouseDoubleClick" Foreground="{Binding ElementName=BtnExit, Path=Foreground}" Background="{Binding ElementName=BtnExit, Path=Background}"/>
+                <Button x:Name="BtnUndo" FontFamily="{DynamicResource AppFontFamily}"
+                        Margin="0,10,0,0" Width="{Binding ElementName=StackPanelMain, Path=ActualWidth}"
+                        Click="BtnUndo_Click" Foreground="{Binding ElementName=BtnExit, Path=Foreground}"
+                        Background="{Binding ElementName=BtnExit, Path=Background}"
+                        IsEnabled="False" Visibility="Collapsed" IsEnabledChanged="Btn_IsEnabledChanged">
+                    <StackPanel Opacity="0.2">
+                        <local:AppIcon Glyph="Undo"/>
+                        <TextBlock Text="撤销" Margin="0,4,0,0"/>
+                    </StackPanel>
+                </Button>
+                <Button x:Name="BtnRedo" FontFamily="{DynamicResource AppFontFamily}"
+                        Margin="0,10,0,0" Width="{Binding ElementName=StackPanelMain, Path=ActualWidth}"
+                        Click="BtnRedo_Click" Foreground="{Binding ElementName=BtnExit, Path=Foreground}"
+                        Background="{Binding ElementName=BtnExit, Path=Background}"
+                        IsEnabled="False" Visibility="Collapsed" IsEnabledChanged="Btn_IsEnabledChanged">
+                    <StackPanel Opacity="0.2">
+                        <local:AppIcon Glyph="Redo"/>
+                        <TextBlock Text="恢复" Margin="0,4,0,0"/>
+                    </StackPanel>
+                </Button>
+                <Button Name="BtnClearAndHideCanvas" Content="清屏&#x000A;&amp;&#x000A;隐藏" Visibility="Collapsed" FontFamily="{DynamicResource AppFontFamily}"
+                        Margin="0,10,0,0" Width="{Binding ElementName=StackPanelMain, Path=ActualWidth}" Block.TextAlignment="Center"
+                        Click="BtnSelect_Click" Foreground="{Binding ElementName=BtnExit, Path=Foreground}" Background="{Binding ElementName=BtnExit, Path=Background}"/>
+                <Grid Name="GridForLeftSideReservedSpace" Height="{Binding ElementName=StackPanelInfo, Path=ActualHeight}"/>
+            </StackPanel>
+        </Viewbox>
+
+        <!-- ZIndex 高于缩略图侧栏(1500)：放映中缩略图展开时，翻页/页码按钮仍可见可点，
+             否则侧栏会盖住按钮导致无法再次点击页码收起缩略图。 -->
+        <Grid Name="GridForRecoverOldUI" Panel.ZIndex="1600">
+            <Grid Visibility="{Binding ElementName=StackPanelPPTControls, Path=Visibility}">
+                <Viewbox Name="ViewboxPPTSidesControl" Visibility="{Binding ElementName=StackPanelPPTButtons, Path=Visibility}" Opacity="0.7" Margin="10" Height="50" HorizontalAlignment="Left" VerticalAlignment="Bottom">
+                    <ui:SimpleStackPanel x:Name="PptNavStackLeft" Orientation="Horizontal" Spacing="5">
+                        <Border Width="36" MouseUp="GridPPTControlPrevious_MouseUp" Height="36" CornerRadius="6" Background="{DynamicResource FloatBarBackground}" BorderThickness="1" BorderBrush="{DynamicResource FloatBarBorderBrush}">
+                            <Grid Margin="6">
+                                <Image Name="ImagePPTControlPreviousPressed" Visibility="Collapsed" Source="{DynamicResource ResourceKey=SeewoImageSource.HorizontalPreviousSlideSelected}"/>
+                                <Image Source="{DynamicResource ResourceKey=SeewoImageSource.HorizontalPreviousSlideNormal}"/>
+                            </Grid>
+                        </Border>
+                        <Border x:Name="PptNavigationBtn" Width="Auto" MinWidth="36" Height="36" CornerRadius="6" Background="{DynamicResource FloatBarBackground}" BorderThickness="1" BorderBrush="{DynamicResource FloatBarBorderBrush}">
+                            <Grid MouseUp="PPTNavigationBtn_Click">
+                                <TextBlock Name="PptNavigationTextBlock" FontSize="10" Foreground="{DynamicResource FloatBarForeground}" HorizontalAlignment="Center" VerticalAlignment="Center" Text="0/0" Margin="2"/>
+                            </Grid>
+                        </Border>
+                        <Border Width="36" MouseUp="GridPPTControlNext_MouseUp" Height="36" CornerRadius="6" Background="{DynamicResource FloatBarBackground}" BorderThickness="1" BorderBrush="{DynamicResource FloatBarBorderBrush}">
+                            <Grid Margin="6">
+                                <Image Name="ImagePPTControlNextPressed" Visibility="Collapsed" Source="{DynamicResource ResourceKey=SeewoImageSource.HorizontalNextSlideSelected}"/>
+                                <Image Source="{DynamicResource ResourceKey=SeewoImageSource.HorizontalNextSlideNormal}"/>
+                            </Grid>
+                        </Border>
+                    </ui:SimpleStackPanel>
+                </Viewbox>
+                <Viewbox Name="ViewboxPPTSidesControlRight" Visibility="{Binding ElementName=StackPanelPPTButtons, Path=Visibility}" Opacity="{Binding ElementName=ViewboxPPTSidesControl, Path=Opacity}" Margin="10" Height="50" HorizontalAlignment="Right" VerticalAlignment="Bottom">
+                    <ui:SimpleStackPanel x:Name="PptNavStackRight" Orientation="Horizontal" Spacing="5">
+                        <Border Width="36" MouseUp="GridPPTControlPrevious_MouseUp" Height="36" CornerRadius="6" Background="{DynamicResource FloatBarBackground}" BorderThickness="1" BorderBrush="{DynamicResource FloatBarBorderBrush}">
+                            <Grid Margin="6">
+                                <Image Source="{DynamicResource ResourceKey=SeewoImageSource.HorizontalPreviousSlideNormal}"/>
+                            </Grid>
+                        </Border>
+                        <Border Width="Auto" MinWidth="36" Visibility="{Binding ElementName=PptNavigationBtn, Path=Visibility}" Height="36" CornerRadius="6" Background="{DynamicResource FloatBarBackground}" BorderThickness="1" BorderBrush="{DynamicResource FloatBarBorderBrush}">
+                            <Grid MouseUp="PPTNavigationBtn_Click">
+                                <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{Binding ElementName=PptNavigationTextBlock, Path=Foreground}" FontSize="{Binding ElementName=PptNavigationTextBlock, Path=FontSize}" Text="{Binding ElementName=PptNavigationTextBlock, Path=Text}" Margin="2"/>
+                            </Grid>
+                        </Border>
+                        <Border Width="36" MouseUp="GridPPTControlNext_MouseUp" Height="36" CornerRadius="6" Background="{DynamicResource FloatBarBackground}" BorderThickness="1" BorderBrush="{DynamicResource FloatBarBorderBrush}">
+                            <Grid Margin="6">
+                                <Image Source="{DynamicResource ResourceKey=SeewoImageSource.HorizontalNextSlideNormal}"/>
+                            </Grid>
+                        </Border>
+                    </ui:SimpleStackPanel>
+                </Viewbox>
+            </Grid>
+        </Grid>
+
+        <Viewbox Name="ViewboxFloatingBar" Margin="100,10,-2000,-200" 
+                 HorizontalAlignment="Left" Height="50" VerticalAlignment="Top">
+            <!-- 拖动期间只改这个 RenderTransform 做纯位移，不碰 Margin：
+                 否则每个 MouseMove 都会让整条浮动栏（30+ Viewbox、ActualWidth 绑定链）
+                 重新 Measure/Arrange，拖动时明显掉帧。松手时再一次性写回 Margin。 -->
+            <Viewbox.RenderTransform>
+                <TranslateTransform x:Name="ViewboxFloatingBarDragTransform" X="0" Y="0"/>
+            </Viewbox.RenderTransform>
+            <Viewbox.LayoutTransform>
+                <ScaleTransform x:Name="ViewboxFloatingBarScaleTransform" ScaleX="1" ScaleY="1"/>
+            </Viewbox.LayoutTransform>
+            <ui:SimpleStackPanel Orientation="Horizontal">
+                <Border Width="36" Height="36" CornerRadius="6" Background="{DynamicResource FloatBarBackground}" BorderThickness="1" BorderBrush="{DynamicResource FloatBarBorderBrush}" MouseDown="SymbolIconEmoji_MouseDown" MouseUp="SymbolIconEmoji_MouseUp">
+                    <ui:SimpleStackPanel Margin="0,5,0,5" Spacing="10" Orientation="Horizontal"
+                                         HorizontalAlignment="Center">
+                        <local:AppIcon x:Name="SymbolIconEmoji" Glyph="Emoji2" Foreground="{DynamicResource FloatBarForeground}"/>
+                    </ui:SimpleStackPanel>
+                </Border>
+                <Border Margin="5,0,0,0" Visibility="Visible" Height="36" Name="BorderFloatingBarMainControls" Background="{DynamicResource FloatBarBackground}" CornerRadius="8" BorderThickness="1" BorderBrush="{DynamicResource FloatBarBorderBrush}">
+                    <Border.RenderTransform>
+                        <ScaleTransform />
+                    </Border.RenderTransform>
+                    <ui:SimpleStackPanel Name="StackPanelFloatingBar" Spacing="10" Orientation="Horizontal">
+                        <ui:SimpleStackPanel Name="StackPanelCanvacMain" Margin="10,5,0,5" Spacing="10" Orientation="{Binding ElementName=StackPanelFloatingBar, Path=Orientation}">
+                            <Grid Height="24" Width="0">
+                            </Grid>
+                            <local:ClickSensitiveGrid Click="SymbolIconCursor_Click" Margin="-10,0,0,0">
+                                <local:AppIcon Glyph="Edit" Foreground="{DynamicResource FloatBarForeground}"/>
+                            </local:ClickSensitiveGrid>
+                        </ui:SimpleStackPanel>
+                        <ui:SimpleStackPanel Name="StackPanelCanvasControls" Visibility="Visible" Margin="10,5,0,5" Spacing="10" Orientation="{Binding ElementName=StackPanelFloatingBar, Path=Orientation}">
+                            <local:ClickSensitiveGrid Click="SymbolIconCursor_Click">
+                                <local:AppIcon Glyph="TouchPointer" Foreground="{DynamicResource FloatBarForeground}"/>
+                            </local:ClickSensitiveGrid>
+                            <ui:SimpleStackPanel Orientation="{Binding ElementName=StackPanelFloatingBar, Path=Orientation}" Spacing="8" Margin="0,1">
+                                <Border Name="BorderPenColorBlack" Background="{Binding ElementName=BtnColorBlack, Path=Background}" MouseUp="BorderPenColorBlack_MouseUp" CornerRadius="4"
+                                    BorderBrush="{DynamicResource FloatBarBorderBrush}" BorderThickness="1"
+                                    Width="{Binding ElementName=BorderPenColorBlack, Path=ActualHeight}">
+                                    <Viewbox Opacity="{Binding ElementName=ViewboxBtnColorBlackContent, Path=Opacity}" Margin="6">
+                                        <local:AppIcon Glyph="Accept" Foreground="White"/>
+                                    </Viewbox>
+                                </Border>
+                                <Border Name="BorderPenColorRed" Background="{Binding ElementName=BtnColorRed, Path=Background}" MouseUp="BorderPenColorRed_MouseUp" CornerRadius="4"
+                                    Width="{Binding ElementName=BorderPenColorRed, Path=ActualHeight}">
+                                    <Viewbox Opacity="{Binding ElementName=ViewboxBtnColorRedContent, Path=Opacity}" Margin="6">
+                                        <local:AppIcon Glyph="Accept" Foreground="White"/>
+                                    </Viewbox>
+                                </Border>
+                                <Border Name="BorderPenColorGreen" Background="{Binding ElementName=BtnColorGreen, Path=Background}" MouseUp="BorderPenColorGreen_MouseUp" CornerRadius="4"
+                                    Width="{Binding ElementName=BorderPenColorGreen, Path=ActualHeight}">
+                                    <Viewbox Opacity="{Binding ElementName=ViewboxBtnColorGreenContent, Path=Opacity}" Margin="6">
+                                        <local:AppIcon Glyph="Accept" Foreground="White"/>
+                                    </Viewbox>
+                                </Border>
+                                <Border Name="BorderPenColorBlue" Background="{Binding ElementName=BtnColorBlue, Path=Background}" MouseUp="BorderPenColorBlue_MouseUp" CornerRadius="4"
+                                    Width="{Binding ElementName=BorderPenColorBlue, Path=ActualHeight}">
+                                    <Viewbox Opacity="{Binding ElementName=ViewboxBtnColorBlueContent, Path=Opacity}" Margin="6">
+                                        <local:AppIcon Glyph="Accept" Foreground="White"/>
+                                    </Viewbox>
+                                </Border>
+                                <Border Name="BorderPenColorYellow" Background="{Binding ElementName=BtnColorYellow, Path=Background}" MouseUp="BorderPenColorYellow_MouseUp" CornerRadius="4"
+                                    Width="{Binding ElementName=BorderPenColorYellow, Path=ActualHeight}">
+                                    <Viewbox Opacity="{Binding ElementName=ViewboxBtnColorYellowContent, Path=Opacity}" Margin="6">
+                                        <local:AppIcon Glyph="Accept" Foreground="White"/>
+                                    </Viewbox>
+                                </Border>
+                                <Border Name="BorderPenColorWhite" Background="White" CornerRadius="4" MouseUp="BorderPenColorWhite_MouseUp"
+                                    BorderBrush="{DynamicResource FloatBarBorderBrush}" BorderThickness="1"
+                                    Width="{Binding ElementName=BorderPenColorYellow, Path=ActualHeight}">
+                                    <Viewbox Name="ViewboxBtnColorWhiteContent" Opacity="0" Margin="6">
+                                        <local:AppIcon Glyph="Accept" Foreground="Black"/>
+                                    </Viewbox>
+                                </Border>
+                            </ui:SimpleStackPanel>
+                            <Grid x:Name="EraserContainer" Width="21" Height="24" Margin="0,1.5,-2,0" MouseDown="Border_MouseDown" MouseUp="ImageEraser_MouseUp" Visibility="{Binding ElementName=BtnErase, Path=Visibility}">
+                                <Image Name="ImageEraser" Margin="0,-4,-1,-2" Source="{DynamicResource ImageSource.RubberNormal}" RenderTransformOrigin="0.5,0.5"/>
+                                <Image Name="ImageEraserMask" Visibility="{Binding Visibility, ElementName=ImageEraser, Converter={StaticResource VisibilityConverter}}" Margin="0,-2.5,0,0" RenderTransformOrigin="0.5,0.5">
+                                    <Image.Source>
+                                        <DrawingImage>
+                                            <DrawingImage.Drawing>
+                                                <DrawingGroup>
+                                                    <DrawingGroup.Children>
+                                                        <GeometryDrawing>
+                                                            <GeometryDrawing.Brush>
+                                                                <SolidColorBrush
+								                                    Color="#FFD8D8D8"
+								                                    Opacity="0" />
+                                                            </GeometryDrawing.Brush>
+                                                            <GeometryDrawing.Pen>
+                                                                <Pen
+								                                    Thickness="1"
+								                                    StartLineCap="Flat"
+								                                    EndLineCap="Flat"
+								                                    LineJoin="Miter">
+                                                                    <Pen.Brush>
+                                                                        <SolidColorBrush
+										                                    Color="#FF979797"
+										                                    Opacity="0" />
+                                                                    </Pen.Brush>
+                                                                </Pen>
+                                                            </GeometryDrawing.Pen>
+                                                            <GeometryDrawing.Geometry>
+                                                                <PathGeometry
+								                                    FillRule="EvenOdd"
+								                                    Figures="M31,31L32,31 32,32 31,32 31,31z M0,0L1,0 1,1 0,1 0,0z" />
+                                                            </GeometryDrawing.Geometry>
+                                                        </GeometryDrawing>
+                                                        <DrawingGroup
+						                                    Transform="-0.707106781186548,-0.707106781186547,-0.707106781186547,0.707106781186548,31.4055917955108,13.0208154846605">
+                                                            <DrawingGroup.Children>
+                                                                <GeometryDrawing x:Name="GeometryDrawingEraser"
+								                                    Brush="#FF666666">
+                                                                    <GeometryDrawing.Geometry>
+                                                                        <PathGeometry
+										                                    FillRule="EvenOdd"
+										                                    Figures="M16.7928932,16.2426407L16.7928932,0.788350252C16.7928932,0.248156103,16.3447877,-0.207106781,15.7920216,-0.207106781L1.79376488,-0.207106781C1.23752408,-0.207106781,0.792893219,0.238574513,0.792893219,0.788350252L0.792893219,16.2426407 16.7928932,16.2426407z M16.7928932,18.2426407L16.7928932,23.7974362C16.7928932,24.3472119,16.3482624,24.7928932,15.7920216,24.7928932L1.79376488,24.7928932C1.24099872,24.7928932,0.792893219,24.3376303,0.792893219,23.7974362L0.792893219,18.2426407 16.7928932,18.2426407z" />
+                                                                    </GeometryDrawing.Geometry>
+                                                                </GeometryDrawing>
+                                                            </DrawingGroup.Children>
+                                                        </DrawingGroup>
+                                                    </DrawingGroup.Children>
+                                                </DrawingGroup>
+                                            </DrawingImage.Drawing>
+                                        </DrawingImage>
+                                    </Image.Source>
+                                </Image>
+                            </Grid>
+                            <Grid Margin="0,0,0,0" Width="20">
+                                <local:AppIcon x:Name="SymbolIconDelete" Glyph="Delete" Foreground="{DynamicResource FloatBarForeground}" 
+                                               MouseDown="Border_MouseDown" MouseUp="SymbolIconDelete_MouseUp"/>
+                                <Border x:Name="BorderClearInDelete" Visibility="Collapsed" Background="White" BorderBrush="{DynamicResource FloatBarBorderBrush}" BorderThickness="1"
+                                    CornerRadius="6" Margin="-40,-60,-40,35">
+                                    <Button Content="点击清屏" ui:ThemeManager.RequestedTheme="Light"
+                                        FontFamily="{DynamicResource AppFontFamily}"
+                                        Width="80" HorizontalAlignment="Center"
+                                        Click="BtnClear_Click"/>
+                                </Border>
+                            </Grid>
+                            <local:AppIcon x:Name="SymbolIconSelect" Glyph="SelectAll" Foreground="{DynamicResource FloatBarForeground}" MouseUp="SymbolIconSelect_MouseUp"/>
+                            <Grid Margin="3,5,0,5">
+                                <Image MouseUp="ImageDrawShape_MouseUp" MouseDown="Border_MouseDown" Margin="-2.5" Source="{DynamicResource DrawShapeImageSource.DrawShapeIcon}"/>
+                                    <Border x:Name="BorderDrawShape" Visibility="Visible" Background="{DynamicResource FloatBarBackground}" BorderBrush="{DynamicResource FloatBarBorderBrush}" BorderThickness="1"
+                                    CornerRadius="8" Margin="-100,-420,-100,30" Height="395">
+                                    <Viewbox Margin="0,0,0,2">
+                                        <ui:SimpleStackPanel Spacing="-8" Orientation="Vertical">
+                                            <TextBlock FontSize="16" Foreground="{DynamicResource FloatBarForeground}"
+                                                       HorizontalAlignment="Left" Margin="10,8">
+                                                <Run Text="图形 / 物理教学图形库"/>
+                                            </TextBlock>
+                                            <local:AppIcon Margin="0,-20,8,15" Glyph="Pin" MouseDown="Border_MouseDown" MouseUp="SymbolIconPinBorderDrawShape_MouseUp" Foreground="{DynamicResource FloatBarForeground}" HorizontalAlignment="Right"/>
+                                            <ui:SimpleStackPanel Margin="20,0,0,0" Orientation="Horizontal">
+                                                <ui:SimpleStackPanel Visibility="Collapsed" Margin="58,6,5,6" Width="54">
+                                                    <Label Margin="0,0,0,-2" Content="自动隐藏" Foreground="{DynamicResource FloatBarForeground}" FontSize="13" VerticalAlignment="Center"/>
+                                                    <Viewbox Height="25">
+                                                        <ui:ToggleSwitch Name="ToggleSwitchDrawShapeBorderAutoHide" Foreground="{DynamicResource FloatBarForeground}" FontFamily="{DynamicResource AppFontFamily}" Width="70" OnContent="开" OffContent="关" IsOn="True"/>
+                                                    </Viewbox>
+                                                </ui:SimpleStackPanel>
+                                            </ui:SimpleStackPanel>
+                                            <ui:SimpleStackPanel Height="50" Spacing="14" Orientation="Horizontal">
+                                                <Image Name="ImageDrawLine" Margin="16,12,0,12" MouseDown="Image_MouseDown" MouseUp="BtnDrawLine_Click" Source="{DynamicResource DrawShapeImageSource.Line}"/>
+                                                <Image Name="ImageDrawDashedLine" Margin="0,12,0,12" MouseDown="Image_MouseDown" MouseUp="BtnDrawDashedLine_Click" Source="{DynamicResource DrawShapeImageSource.DashedLine}"/>
+                                                <Image Name="ImageDrawDotLine" Margin="0,12,0,12" MouseDown="Image_MouseDown" MouseUp="BtnDrawDotLine_Click" Source="{DynamicResource DrawShapeImageSource.DotLine}"/>
+                                                <Image Name="ImageDrawArrow" Margin="0,12,0,12" MouseDown="Image_MouseDown" MouseUp="BtnDrawArrow_Click" Source="{DynamicResource DrawShapeImageSource.ArrowLine}"/>
+                                                <Image Name="ImageDrawParallelLine" Margin="0,11.5,16,11.5" MouseDown="Image_MouseDown" MouseUp="BtnDrawParallelLine_Click" Source="{DynamicResource DrawShapeImageSource.ParallelLine}"/>
+                                            </ui:SimpleStackPanel>
+                                            <ui:SimpleStackPanel Height="50" Spacing="15" Orientation="Horizontal">
+                                                <Image Margin="16,12,0,12" MouseUp="BtnDrawCoordinate1_Click" Source="{DynamicResource DrawShapeImageSource.Coordinate1}"/>
+                                                <Image Margin="0,12" MouseUp="BtnDrawCoordinate2_Click" Source="{DynamicResource DrawShapeImageSource.Coordinate2}"/>
+                                                <Image Margin="0,12" MouseUp="BtnDrawCoordinate3_Click" Source="{DynamicResource DrawShapeImageSource.Coordinate3}"/>
+                                                <Image Margin="0,12" MouseUp="BtnDrawCoordinate4_Click" Source="{DynamicResource DrawShapeImageSource.Coordinate4}"/>
+                                                <Image Margin="-1,11.5" MouseUp="BtnDrawCoordinate5_Click" Source="{DynamicResource DrawShapeImageSource.Coordinate5}"/>
+                                            </ui:SimpleStackPanel>
+                                            <ui:SimpleStackPanel Height="50" Spacing="10" Orientation="Horizontal">
+                                                <Image Margin="16,11,2,11" MouseUp="BtnDrawRectangleCenter_Click" Source="{DynamicResource DrawShapeImageSource.RectangleCenter}"/>
+                                                <Image Visibility="Collapsed" Margin="0,10" MouseUp="BtnDrawEllipse_Click" Source="{DynamicResource DrawShapeImageSource.Ellipse}"/>
+                                                <Image Margin="0,10" MouseUp="BtnDrawCircle_Click" Source="{DynamicResource DrawShapeImageSource.Circle}"/>
+                                                <Image Margin="0,10" MouseUp="BtnDrawDashedCircle_Click" Source="{DynamicResource DrawShapeImageSource.DashedCircle}"/>
+                                                <Image Margin="0,10" MouseUp="BtnDrawCenterEllipse_Click" Source="{DynamicResource DrawShapeImageSource.EllipseCenter}" Width="30"/>
+                                                <Image Margin="0,10" MouseUp="BtnDrawCenterEllipseWithFocalPoint_Click" Source="{DynamicResource DrawShapeImageSource.EllipseCenterWithFocalPoint}" Width="30"/>
+                                            </ui:SimpleStackPanel>
+                                            <ui:SimpleStackPanel Height="50" Spacing="10" Orientation="Horizontal">
+                                                <Image Margin="16,10,2,10" MouseUp="BtnDrawHyperbola_Click" Width="26" Source="{DynamicResource DrawShapeImageSource.Hyperbola}"/>
+                                                <Image Margin="4,10,2,10" MouseUp="BtnDrawHyperbolaWithFocalPoint_Click" Width="26" Source="{DynamicResource DrawShapeImageSource.HyperbolaWithFocalPoint}"/>
+                                                <Image Margin="2.5,10,2,10" MouseUp="BtnDrawParabola1_Click" Width="26" Source="{DynamicResource DrawShapeImageSource.Parabola}"/>
+                                                <Image Margin="1,10,2,10" MouseUp="BtnDrawParabolaWithFocalPoint_Click" Width="26" Source="{DynamicResource DrawShapeImageSource.ParabolaWithFocalPoint}" RenderTransformOrigin="0.5,0.5">
+                                                    <Image.RenderTransform>
+                                                        <TransformGroup>
+                                                            <ScaleTransform/>
+                                                            <SkewTransform/>
+                                                            <RotateTransform Angle="90"/>
+                                                            <TranslateTransform/>
+                                                        </TransformGroup>
+                                                    </Image.RenderTransform>
+                                                </Image>
+                                                <Image Margin="2,10,2,10" MouseUp="BtnDrawParabola2_Click" Width="26" Source="{DynamicResource DrawShapeImageSource.Parabola}" RenderTransformOrigin="0.5,0.5">
+                                                    <Image.RenderTransform>
+                                                        <TransformGroup>
+                                                            <ScaleTransform/>
+                                                            <SkewTransform/>
+                                                            <RotateTransform Angle="90"/>
+                                                            <TranslateTransform/>
+                                                        </TransformGroup>
+                                                    </Image.RenderTransform>
+                                                </Image>
+                                            </ui:SimpleStackPanel>
+                                            <ui:SimpleStackPanel Height="50" Spacing="10" Orientation="Horizontal">
+                                                <Image Margin="15,11,2,11" MouseUp="BtnDrawRectangle_Click" Source="{DynamicResource DrawShapeImageSource.Rectangle}"/>
+                                                <Image Margin="6,10,2,10" MouseUp="BtnDrawCylinder_Click" Source="{DynamicResource DrawShapeImageSource.Cylinder}"/>
+                                                <Image Margin="8,12.5,0,10" MouseUp="BtnDrawCone_Click" Source="{DynamicResource DrawShapeImageSource.Cone}"/>
+                                                <Image Margin="5.5,12.5,2.5,10" MouseUp="BtnDrawCuboid_Click" Source="{DynamicResource DrawShapeImageSource.Cuboid}"/>
+                                                <Image Margin="0,10,2,10" Width="30" MouseUp="BtnDrawPrism_Click" Source="{DynamicResource DrawShapeImageSource.Prism}"/>
+                                                <Image Visibility="Collapsed" Margin="0,11.5,2.5,9.5" MouseUp="BtnDrawCuboid_Click" Source="{DynamicResource DrawShapeImageSource.Tetrahedron}"/>
+                                            </ui:SimpleStackPanel>
+                                            <ui:SimpleStackPanel Height="50" Spacing="10" Orientation="Horizontal">
+                                                <Image Margin="16,10,2,10" Width="30" MouseUp="BtnDrawPlaneMirror_Click" ToolTip="平面镜（竖直）：镜面竖线在右、背面斜线在左" Source="{DynamicResource DrawShapeImageSource.PlaneMirror}"/>
+                                                <!-- 原第2个凹面镜、第3个凸面镜已按下述要求删除；此处放“竖直平面镜旋转90°”的水平版本：镜面横线在上、背面斜线在下 -->
+                                                <Image Margin="0,10,2,10" Width="30" MouseUp="BtnDrawPlaneMirrorHorizontal_Click" ToolTip="平面镜（水平）：镜面横线在上、背面斜线在下" Source="{DynamicResource DrawShapeImageSource.PlaneMirrorHorizontal}"/>
+                                                <Image Margin="0,10,2,10" Width="30" MouseUp="BtnDrawConvexLens_Click" ToolTip="凸透镜（双凸）" Source="{DynamicResource DrawShapeImageSource.ConvexLens}"/>
+                                                <Image Margin="0,10,2,10" Width="30" MouseUp="BtnDrawConcaveLens_Click" ToolTip="凹透镜（双凹）" Source="{DynamicResource DrawShapeImageSource.ConcaveLens}"/>
+                                            </ui:SimpleStackPanel>
+                                            <!-- 第七行：物理电学图元（拖拽绘制，mode 33~36） -->
+                                            <ui:SimpleStackPanel Height="50" Spacing="10" Orientation="Horizontal">
+                                                <Image Margin="16,10,2,10" Width="30" MouseUp="BtnDrawBattery_Click" ToolTip="电源/电池：长线正极、短线负极" Source="{DynamicResource DrawShapeImageSource.Battery}"/>
+                                                <Image Margin="0,10,2,10" Width="30" MouseUp="BtnDrawResistor_Click" ToolTip="定值电阻" Source="{DynamicResource DrawShapeImageSource.Resistor}"/>
+                                                <Image Margin="0,10,2,10" Width="30" MouseUp="BtnDrawSwitch_Click" ToolTip="开关（断开）" Source="{DynamicResource DrawShapeImageSource.Switch}"/>
+                                                <Image Margin="0,10,2,10" Width="30" MouseUp="BtnDrawBulb_Click" ToolTip="小灯泡" Source="{DynamicResource DrawShapeImageSource.Bulb}"/>
+                                                <Image Margin="0,10,2,10" Width="30" MouseUp="BtnDrawSpring_Click" ToolTip="弹簧 / 螺线管侧视" Source="{DynamicResource DrawShapeImageSource.Spring}"/>
+                                            </ui:SimpleStackPanel>
+                                            <!-- 第八行：物理波形/电磁图元（拖拽绘制，mode 37~42） -->
+                                            <ui:SimpleStackPanel Height="50" Spacing="10" Orientation="Horizontal">
+                                                <Image Margin="16,10,2,10" Width="30" MouseUp="BtnDrawSineWave_Click" ToolTip="正弦波形（交流信号）" Source="{DynamicResource DrawShapeImageSource.SineWave}"/>
+                                                <Image Margin="0,10,2,10" Width="30" MouseUp="BtnDrawPositiveCharge_Click" ToolTip="正点电荷 ⊕" Source="{DynamicResource DrawShapeImageSource.PositiveCharge}"/>
+                                                <Image Margin="0,10,2,10" Width="30" MouseUp="BtnDrawNegativeCharge_Click" ToolTip="负点电荷 ⊖" Source="{DynamicResource DrawShapeImageSource.NegativeCharge}"/>
+                                                <Image Margin="0,10,2,10" Width="30" MouseUp="BtnDrawMagneticFieldOut_Click" ToolTip="均匀磁场向外：拖拽画区域，整齐铺满圆点，数量随区域大小变化" Source="{DynamicResource DrawShapeImageSource.MagneticFieldOut}"/>
+                                                <Image Margin="0,10,2,10" Width="30" MouseUp="BtnDrawMagneticFieldIn_Click" ToolTip="均匀磁场向里：拖拽画区域，整齐铺满叉号，数量随区域大小变化" Source="{DynamicResource DrawShapeImageSource.MagneticFieldIn}"/>
+                                            </ui:SimpleStackPanel>
+                                        </ui:SimpleStackPanel>
+                                    </Viewbox>
+                                </Border>
+                            </Grid>
+                            <local:AppIcon Glyph="Undo" Foreground="{DynamicResource FloatBarForeground}" Margin="0,0,-2,0"
+                                           Opacity="{Binding ElementName=BtnUndo, Path=IsEnabled, Converter={StaticResource IsEnabledToOpacityConverter}}"
+                                           IsEnabled="{Binding ElementName=BtnUndo, Path=IsEnabled}"
+                                           MouseUp="SymbolIconUndo_MouseUp" MouseDown="Border_MouseDown"/>
+                            <local:AppIcon Glyph="Redo" Foreground="{DynamicResource FloatBarForeground}" Margin="-2,0,0,0"
+                                           Opacity="{Binding ElementName=BtnRedo, Path=IsEnabled, Converter={StaticResource IsEnabledToOpacityConverter}}"
+                                           IsEnabled="{Binding ElementName=BtnRedo, Path=IsEnabled}"
+                                           MouseUp="SymbolIconRedo_MouseUp" MouseDown="Border_MouseDown"/>
+                            <local:AppIcon x:Name="LockSmithSymbol" 
+                                           Glyph="Pin" Foreground="{DynamicResource FloatBarForeground}" Margin="-2,0,0,0"
+                                           MouseUp="SymbolIconPin_MouseUp" MouseDown="Border_MouseDown"/>
+                        </ui:SimpleStackPanel>
+                        <ui:SimpleStackPanel Orientation="{Binding ElementName=StackPanelFloatingBar, Path=Orientation}">
+                            <Grid Width="20" Height="24" Margin="2,0,12,1">
+                                <Image Margin="-8" MouseDown="Border_MouseDown" MouseUp="ImageBlackboard_MouseUp">
+                                    <Image.Source>
+                                        <DrawingImage>
+                                            <DrawingImage.Drawing>
+                                                <DrawingGroup ClipGeometry="M0,0 V64 H64 V0 H0 Z">
+                                                    <DrawingGroup Opacity="1">
+                                                        <GeometryDrawing Brush="{DynamicResource FloatBarForeground}" Geometry="F1 M64,64z M0,0z M15.125,48.875L15.125,17.375 21.875,17.375 21.875,15.125 24.125,15.125 24.125,17.375 39.875,17.375 39.875,15.125 42.125,15.125 42.125,17.375 48.875,17.375 48.875,48.875 M46.625,46.625L46.625,26.375 17.375,26.375 17.375,46.625 M17.375,24.125L46.625,24.125 46.625,19.625 42.125,19.625 42.125,21.875 39.875,21.875 39.875,19.625 24.125,19.625 24.125,21.875 21.875,21.875 21.875,19.625 17.375,19.625 17.375,24.125z" />
+                                                    </DrawingGroup>
+                                                </DrawingGroup>
+                                            </DrawingImage.Drawing>
+                                        </DrawingImage>
+                                    </Image.Source>
+                                </Image>
+                            </Grid>
+                            <Grid Margin="0,5,0,5" Visibility="{Binding ElementName=StackPanelPPTButtons, Path=Visibility}">
+                                <Image Source="{DynamicResource ResourceKey=SeewoImageSource.PPTExitNormal}" Visibility="{Binding ElementName=BtnPPTSlideShowEnd, Path=Visibility}" MouseDown="Border_MouseDown" MouseUp="ImagePPTControlEnd_MouseUp" Margin="-2,1,10,2"/>
+                            </Grid>
+                            <ui:SimpleStackPanel Margin="0,5,10,5" Spacing="10" Orientation="{Binding ElementName=StackPanelFloatingBar, Path=Orientation}">
+                                <Grid Height="24" Width="20" Name="GridWrench">
+                                    <local:AppIcon Glyph="Repair" Foreground="{DynamicResource FloatBarForeground}" MouseDown="Border_MouseDown" MouseUp="SymbolIconTools_MouseUp"/>
+                                </Grid>
+                                <Popup Name="PopupTools" PlacementTarget="{Binding ElementName=GridWrench}" Placement="Top" StaysOpen="False" AllowsTransparency="True" HorizontalOffset="37">
+                                    <Border Width="215" CornerRadius="8" Background="{DynamicResource FloatBarBackground}" BorderThickness="1" BorderBrush="{DynamicResource FloatBarBorderBrush}"
+                                            Padding="12,10,12,12">
+                                        <ui:SimpleStackPanel Spacing="10">
+                                            <Label Content="快捷设置" FontSize="14" Foreground="{DynamicResource FloatBarForeground}" Margin="0,0,0,2"/>
+                                            <ui:SimpleStackPanel>
+                                                <Label Margin="0,0,0,-4" Content="画笔粗细" Foreground="{DynamicResource FloatBarForeground}" FontSize="13"/>
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Slider HorizontalAlignment="Left" Minimum="1" Maximum="20" Width="110"
+                                                            IsSnapToTickEnabled="True" Value="{Binding Source={x:Reference InkWidthSlider}, Path=Value, Mode=TwoWay}"
+                                                            TickFrequency="1" TickPlacement="Both"/>
+                                                    <TextBlock Text="{Binding Value, Source={x:Reference InkWidthSlider}, Mode=OneWay}"
+                                                               Foreground="{DynamicResource FloatBarForeground}"
+                                                               VerticalAlignment="Bottom" Margin="8,0,0,6" Width="16" FontSize="13"/>
+                                                </StackPanel>
+                                            </ui:SimpleStackPanel>
+                                            <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
+                                                <ui:SimpleStackPanel Margin="0,0,18,0">
+                                                    <Label Margin="0,0,0,-4" Content="墨迹识别" Foreground="{DynamicResource FloatBarForeground}" FontSize="13"/>
+                                                    <ui:ToggleSwitch Foreground="{DynamicResource FloatBarForeground}" FontFamily="{DynamicResource AppFontFamily}" Width="72" MinWidth="0" OnContent="开" OffContent="关" Toggled="ToggleSwitchEnableInkToShape_Toggled" IsOn="{Binding Source={x:Reference ToggleSwitchEnableInkToShape}, Path=IsOn}"/>
+                                                </ui:SimpleStackPanel>
+                                                <ui:SimpleStackPanel>
+                                                    <Label Margin="0,0,0,-4" Content="手指模式" Foreground="{DynamicResource FloatBarForeground}" FontSize="13"/>
+                                                    <ui:ToggleSwitch Foreground="{DynamicResource FloatBarForeground}" IsOn="{Binding Source={x:Reference ToggleSwitchModeFinger}, Path=IsOn}" FontFamily="{DynamicResource AppFontFamily}" OnContent="开" OffContent="关" MinWidth="0" Width="72"/>
+                                                </ui:SimpleStackPanel>
+                                            </StackPanel>
+                                            <ui:SimpleStackPanel Orientation="Horizontal" Spacing="14">
+                                                <Grid MouseDown="Border_MouseDown" MouseUp="GridInkReplayButton_MouseUp">
+                                                    <local:AppIcon Glyph="Edit" Foreground="{DynamicResource FloatBarForeground}"/>
+                                                    <Image Source="{DynamicResource AndroidRefreshDrawingImage}" VerticalAlignment="Bottom" HorizontalAlignment="Right"
+                                                           Margin="0,0,-3,-3" Width="11"/>
+                                                </Grid>
+                                                <local:AppIcon Glyph="Shuffle" Foreground="{DynamicResource FloatBarForeground}" MouseDown="Border_MouseDown" MouseUp="SymbolIconRand_MouseUp"/>
+                                                <Grid MouseUp="SymbolIconRandOne_MouseUp" MouseDown="Border_MouseDown">
+                                                    <local:AppIcon Glyph="Shuffle" Foreground="{DynamicResource FloatBarForeground}"/>
+                                                    <Border CornerRadius="50" BorderBrush="{DynamicResource FloatBarForeground}" BorderThickness="1"
+                                                            HorizontalAlignment="Center" Margin="-2,0,0,-2" VerticalAlignment="Bottom" Height="9" Width="9">
+                                                        <TextBlock Text="1" FontSize="7" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,-0.8,0,0" Foreground="{DynamicResource FloatBarForeground}"/>
+                                                    </Border>
+                                                </Grid>
+                                            </ui:SimpleStackPanel>
+                                            <ui:SimpleStackPanel Orientation="Horizontal" Spacing="14">
+                                                <local:AppIcon Glyph="Camera" Foreground="{DynamicResource FloatBarForeground}" MouseDown="Border_MouseDown" MouseUp="SymbolIconScreenshot_MouseUp" ToolTip="截屏"/>
+                                                <local:AppIcon Glyph="Setting" Foreground="{DynamicResource FloatBarForeground}" MouseDown="Border_MouseDown" MouseUp="SymbolIconSettings_Click" ToolTip="设置"/>
+                                            </ui:SimpleStackPanel>
+
+                                            <!-- Web 控制台：底部常驻显示本机 IP 与端口，方便用户照着在手机/其它电脑浏览器打开 -->
+                                            <Border Margin="0,2,0,0" Padding="0,9,0,0"
+                                                    BorderThickness="0,1,0,0" BorderBrush="{DynamicResource FloatBarBorderBrush}">
+                                                <ui:SimpleStackPanel Spacing="4">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <TextBlock Text="Web 控制台" FontSize="11" Opacity="0.65"
+                                                                   Foreground="{DynamicResource FloatBarForeground}"/>
+                                                        <TextBlock Loaded="WebInfoState_Loaded" Margin="8,0,0,0" FontSize="11"
+                                                                   Foreground="{DynamicResource FloatBarForeground}"/>
+                                                    </StackPanel>
+                                                    <!-- Web 控制台默认不启动，必须在这里手动打开 -->
+                                                    <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
+                                                        <TextBlock Text="启用服务" FontSize="11" Opacity="0.65" VerticalAlignment="Center"
+                                                                   Foreground="{DynamicResource FloatBarForeground}"/>
+                                                        <ui:ToggleSwitch x:Name="WebConsoleSwitch" Margin="8,0,0,0" Width="72" MinWidth="0"
+                                                                         FontSize="11" OnContent="开" OffContent="关"
+                                                                         Foreground="{DynamicResource FloatBarForeground}"
+                                                                         FontFamily="{DynamicResource AppFontFamily}"
+                                                                         Loaded="WebConsoleSwitch_Loaded" Toggled="WebConsoleSwitch_Toggled"
+                                                                         ToolTip="打开后即可用手机 / 其它电脑访问本机 Web 控制台"/>
+                                                    </StackPanel>
+                                                    <!-- 所有可用 IPv4 地址逐条显示，点击即在浏览器打开验证 -->
+                                                    <StackPanel x:Name="WebInfoUrlPanel" Loaded="WebInfoUrl_Loaded"
+                                                                ToolTip="点击地址用浏览器打开验证">
+                                                        <TextBlock Text="读取中…" FontSize="12"
+                                                                   Foreground="{DynamicResource FloatBarForeground}"/>
+                                                    </StackPanel>
+                                                    <TextBlock Text="局域网无法访问？点击重新放行防火墙" FontSize="10"
+                                                               TextWrapping="Wrap" Opacity="0.7"
+                                                               Foreground="{DynamicResource FloatBarForeground}"
+                                                               TextDecorations="Underline" Cursor="Hand"
+                                                               ToolTip="以管理员身份重新注册 URL ACL 与入站规则"
+                                                               MouseUp="WebInfoFirewall_MouseUp"/>
+                                                </ui:SimpleStackPanel>
+                                            </Border>
+
+                                            <!-- 退出程序：整包退出（画板 + 远控 + 托盘），复用主退出逻辑 -->
+                                            <Border Margin="0,2,0,0" Padding="0,9,0,0"
+                                                    BorderThickness="0,1,0,0" BorderBrush="{DynamicResource FloatBarBorderBrush}">
+                                                <Button Content="退出程序" Click="BtnExit_Click"
+                                                        HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
+                                                        Style="{StaticResource DangerButtonStyle}"
+                                                        FontFamily="{DynamicResource AppFontFamily}" FontSize="12"
+                                                        ToolTip="退出整个程序（画板 + 远控 + 托盘）"/>
+                                            </Border>
+                                        </ui:SimpleStackPanel>
+                                    </Border>
+                                </Popup>
+                            </ui:SimpleStackPanel>
+                        </ui:SimpleStackPanel>
+                    </ui:SimpleStackPanel>
+                </Border>
+            </ui:SimpleStackPanel>
+        </Viewbox>
+        <Grid Name="GridForFloatingBarDraging" Background="#01000000" Visibility="Collapsed"
+              MouseMove="SymbolIconEmoji_MouseMove" MouseUp="SymbolIconEmoji_MouseUp"/>
+        <InkCanvas Name="PainterCanvasForInkReplay" MouseDown="PainterCanvasForInkReplay_MouseDown" Visibility="Collapsed" EditingMode="None" Background="Transparent"/>
+
+        <!-- PPT 放映缩略图侧栏：点击哪一侧的页码按钮，就在这侧从屏幕顶部到底部显示；
+             一行一页、当前页居中、可上下滚动或用滑动条找页，点击缩略图跳转。 -->
+        <Grid Name="PptThumbnailOverview" Visibility="Collapsed" Panel.ZIndex="1500">
+            <!-- 左侧全高侧栏 -->
+            <Border Name="PptThumbPanelLeft" HorizontalAlignment="Left" VerticalAlignment="Stretch"
+                    Width="200" Margin="0,0,0,0" Padding="8"
+                    Background="{DynamicResource FloatBarBackground}"
+                    BorderBrush="{DynamicResource FloatBarBorderBrush}" BorderThickness="0,0,1,0"
+                    Visibility="Collapsed">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <DockPanel Grid.Row="0" Margin="0,0,0,6" LastChildFill="False">
+                        <TextBlock Text="幻灯片 · 点击跳页" FontFamily="{DynamicResource AppFontFamily}" FontSize="13"
+                                   Foreground="{DynamicResource FloatBarForeground}" VerticalAlignment="Center"/>
+                        <Button DockPanel.Dock="Right" Content="关闭" FontFamily="{DynamicResource AppFontFamily}" FontSize="12"
+                                Padding="6,2" Background="Transparent" Cursor="Hand"
+                                Foreground="{DynamicResource FloatBarForeground}" Click="PptThumbnailOverviewClose_Click"/>
+                    </DockPanel>
+                    <ScrollViewer Name="PptThumbScrollLeft" Grid.Row="1" VerticalScrollBarVisibility="Auto"
+                                  HorizontalScrollBarVisibility="Disabled" VerticalAlignment="Stretch">
+                        <StackPanel x:Name="PptThumbnailWrapPanel" Orientation="Vertical"/>
+                    </ScrollViewer>
+                </Grid>
+            </Border>
+            <!-- 右侧全高侧栏：缩略图另放一个容器，避免与左侧共用导致点击哪侧都搬到同一处 -->
+            <Border Name="PptThumbPanelRight" HorizontalAlignment="Right" VerticalAlignment="Stretch"
+                    Width="200" Padding="8"
+                    Background="{DynamicResource FloatBarBackground}"
+                    BorderBrush="{DynamicResource FloatBarBorderBrush}" BorderThickness="1,0,0,0"
+                    Visibility="Collapsed">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <DockPanel Grid.Row="0" Margin="0,0,0,6" LastChildFill="False">
+                        <TextBlock Text="幻灯片 · 点击跳页" FontFamily="{DynamicResource AppFontFamily}" FontSize="13"
+                                   Foreground="{DynamicResource FloatBarForeground}" VerticalAlignment="Center"/>
+                        <Button DockPanel.Dock="Right" Content="关闭" FontFamily="{DynamicResource AppFontFamily}" FontSize="12"
+                                Padding="6,2" Background="Transparent" Cursor="Hand"
+                                Foreground="{DynamicResource FloatBarForeground}" Click="PptThumbnailOverviewClose_Click"/>
+                    </DockPanel>
+                    <ScrollViewer Name="PptThumbScrollRight" Grid.Row="1" VerticalScrollBarVisibility="Auto"
+                                  HorizontalScrollBarVisibility="Disabled" VerticalAlignment="Stretch">
+                        <StackPanel x:Name="PptThumbnailWrapPanelRight" Orientation="Vertical"/>
+                    </ScrollViewer>
+                </Grid>
+            </Border>
+        </Grid>
+    </Grid>
+</Window>

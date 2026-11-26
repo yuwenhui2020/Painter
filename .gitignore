@@ -347,3 +347,11 @@ ASALocalRun/
 
 # BeatPulse healthcheck temp database
 healthchecksdb
+
+# Painter 运行时生成的本地文件（不应提交到仓库）
+Log.txt
+crash.log
+Settings.json
+Settings.json.bad.*
+*.bad.*
+tmp/

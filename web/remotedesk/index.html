@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <title>屏幕显示与控制 · Painter</title>
+  <!-- 旧版首页位于 /，现已改为 Web 功能导航页；远控客户端迁移到 /remotedesk。
+       app.js 内 /wsconfig 与 /ws 都是绝对路径，因此这里使用根路径引用共享资源。 -->
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+    <div id="stage">
+        <div id="wrap">
+            <canvas id="screen" width="1280" height="720"></canvas>
+        </div>
+    </div>
+
+    <div id="statusbar">
+        <span id="status">连接中…</span>
+        <label class="tool">画质
+            <select id="quality">
+                <option value="smooth">流畅</option>
+                <option value="normal" selected>标清</option>
+                <option value="hd">高清</option>
+            </select>
+        </label>
+        <button id="btnCad" class="tool-btn" title="发送 Ctrl+Alt+Del（需被控端已安装 UAC 支持）">Ctrl+Alt+Del</button>
+        <button id="btnLock" class="tool-btn" title="锁定被控端屏幕">锁屏</button>
+        <span class="tool" title="与远端剪贴板交换文本">
+            <input id="clipText" type="text" placeholder="剪贴板文本" style="width:140px;background:#303134;color:#e8eaed;border:1px solid #5f6368;border-radius:4px;padding:2px 6px;font-size:12px;" />
+            <button id="btnClipSend" class="tool-btn" title="把文本写入远端剪贴板">发送</button>
+            <button id="btnClipGet" class="tool-btn" title="取回远端剪贴板文本">取回</button>
+        </span>
+        <span id="hint">移动/触摸即可操作 · 轻触=左键 · 长按=右键 · 双指上下滑=滚轮 · 键盘可输入（支持中文/表情）· 多鼠标：每浏览器一个光标并显示 IP</span>
+        <p class="msg" id="authmsg"></p>
+    </div>
+
+    <div id="overlay">
+        <div class="panel">
+            <h1>屏幕显示与控制</h1>
+            <p class="sub">请输入访问密码</p>
+            <input id="pwd" type="password" placeholder="密码（无密码可留空）" autocomplete="off" />
+            <button id="loginBtn">连接</button>
+            <p class="sub" style="margin-top:14px"><a href="/" style="color:#8ab4f8">返回功能导航</a></p>
+        </div>
+    </div>
+
+    <!-- 隐藏输入框：保持焦点以捕获物理键盘与移动端 IME/中文输入，透明覆盖在画布左上角，
+         不遮挡画面；input 事件里把文本通过 UnicodeText 通道注入被控端。 -->
+    <input id="kbd" type="text" autocomplete="off" autocorrect="off" autocapitalize="off"
+           spellcheck="false" aria-label="远程键盘输入"
+           style="position:fixed;left:0;top:0;width:1px;height:1px;opacity:0.01;border:0;padding:0;margin:0;z-index:5;font-size:16px;" />
+
+    <script src="/app.js"></script>
+</body>
+</html>

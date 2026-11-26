@@ -1,0 +1,40 @@
+<!-- 深色主题（Windows 11 Fluent Dark）：只放随主题变化的颜色值，控件的“画法”见 Fluent.xaml。
+     键名必须与 Light.xaml 完全一致，运行时按 SetTheme 整体替换。 -->
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- 悬浮工具栏：Fluent 深色 layer + 中性描边 -->
+    <SolidColorBrush x:Key="FloatBarBackground" Color="#FF2B2B2B"/>
+    <SolidColorBrush x:Key="FloatBarBorderBrush" Color="#FF3F3F3F"/>
+    <SolidColorBrush x:Key="FloatBarForeground" Color="#FFF0F0F0"/>
+    <Color x:Key="FloatBarForegroundColor">#FFF0F0F0</Color>
+
+    <!-- 正文 / 次要文字 -->
+    <SolidColorBrush x:Key="FluentTextPrimaryBrush" Color="#FFF0F0F0"/>
+    <SolidColorBrush x:Key="FluentTextSecondaryBrush" Color="#FFA8A8A8"/>
+
+    <!-- 卡片：Elevated 底 + 中性描边 -->
+    <SolidColorBrush x:Key="FluentCardBackgroundBrush" Color="#FF323232"/>
+    <SolidColorBrush x:Key="FluentCardBorderBrush" Color="#FF404040"/>
+
+    <!-- 控件填充 / 描边 / 悬停 / 按下 -->
+    <SolidColorBrush x:Key="FluentControlFillBrush" Color="#FF383838"/>
+    <SolidColorBrush x:Key="FluentControlStrokeBrush" Color="#FF4A4A4A"/>
+    <SolidColorBrush x:Key="FluentControlStrongStrokeBrush" Color="#FF9A9A9A"/>
+    <SolidColorBrush x:Key="FluentControlHoverBrush" Color="#FF3D3D3D"/>
+    <SolidColorBrush x:Key="FluentControlPressedBrush" Color="#FF333333"/>
+
+    <!-- 滑动条轨道与强调色（深色下用更亮的蓝） -->
+    <SolidColorBrush x:Key="FluentSliderTrackBrush" Color="#FF4A4A4A"/>
+    <SolidColorBrush x:Key="FluentAccentFillBrush" Color="#FF4CC2FF"/>
+    <Color x:Key="FluentAccentColor">#FF4CC2FF</Color>
+
+    <!-- 悬停 / 按下叠加层 -->
+    <SolidColorBrush x:Key="FluentHoverOverlayBrush" Color="#15FFFFFF"/>
+    <SolidColorBrush x:Key="FluentPressedOverlayBrush" Color="#24FFFFFF"/>
+
+    <!-- 滑块本体：白底 + 亮蓝描边 -->
+    <Color x:Key="FluentThumbFillColor">#FFFFFFFF</Color>
+    <Color x:Key="FluentThumbStrokeColor">#FF4CC2FF</Color>
+
+</ResourceDictionary>

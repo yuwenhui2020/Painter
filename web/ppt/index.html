@@ -1,0 +1,649 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>PPT Web控制台</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta charset="utf-8" />
+    <script>
+        // =====================================================================
+        // 访问码透传
+        //
+        // 控制台现已启用随机访问码鉴权：所有 HTTP 请求与 WebSocket 握手都必须携带
+        // 正确的 code，否则服务端返回 401 / 拒绝握手。
+        //
+        // 打开方式为 http://<IP>:8888/?code=XXXXXX （二维码与面板地址均已带上），
+        // 这里把它读取出来，并在建立每条 WebSocket 时自动附加，无需用户手工填写。
+        // =====================================================================
+        (function () {
+            function readAccessCode() {
+                try {
+                    var params = new URLSearchParams(window.location.search);
+                    return params.get('code') || '';
+                } catch (e) {
+                    return '';
+                }
+            }
+            window.ACCESS_CODE = readAccessCode();
+
+            // 给 ws:// 地址补上 ?code=xxx（若已有查询串则用 & 拼接）
+            window.withAccessCode = function (url) {
+                if (!window.ACCESS_CODE) return url;
+                return url + (url.indexOf('?') >= 0 ? '&' : '?') + 'code=' + encodeURIComponent(window.ACCESS_CODE);
+            };
+
+            // Windows 7 的 HTTP.sys 没有 WebSocket：兼容通道端口由 /wsconfig 返回（0 = 与页面同源）
+            window.painterWsUrl = function (path, cfg) {
+                var h = location.hostname;
+                if (h.indexOf(':') >= 0 && h.charAt(0) !== '[') h = '[' + h + ']';
+                var p = (cfg && cfg.wsPort) ? cfg.wsPort : location.port;
+                var proto = location.protocol === 'https:' ? 'wss://' : 'ws://';
+                return proto + (p ? h + ':' + p : h) + path;
+            };
+            // 每次连接 / 重连都重新取：Win7 兼容通道可能 10 秒后才重试成功，
+            // 缓存一次性 Promise 会把 wsPort=0 的结果永久卡死。
+            window.painterWsConfig = function () {
+                return fetch('/wsconfig', { cache: 'no-store' })
+                    .then(function (r) { return r.ok ? r.json() : null; })
+                    .catch(function () { return null; });
+            };
+        })();
+    </script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            background-color: #f5f5f5;
+        }
+
+        .container {
+            max-width: 1920px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+
+        .control-panel {
+            margin-bottom: 20px;
+            background-color: #ffffff;
+            border-radius: 5px;
+        }
+
+        table {
+            width: 100%;
+            border: 0px solid black;
+        }
+
+        th, td {
+            border: 0px solid black;
+            text-align: center;
+        }
+
+        button {
+            width: 100%;
+            display: inline-block;
+            padding: 10% 5%;
+            margin: 0px 0px;
+            font-size: 3vh;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 55px;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+
+            button:hover {
+                background-color: #45a049;
+            }
+
+            button:disabled {
+                background-color: #cccccc;
+                cursor: not-allowed;
+            }
+
+        /* 三列等宽、六行等高：每列都是 6 行固定行高的网格，行列严格对齐 */
+        .cols {
+            --row-h: clamp(44px, 7.5vh, 60px);
+            display:grid; grid-template-columns:repeat(3, minmax(0, 1fr));
+            gap:8px 10px; align-items:stretch;
+        }
+        .col { display:grid; grid-template-rows:repeat(6, var(--row-h)); gap:8px; min-width:0; }
+        .col button {
+            width:100%; height:100%; min-width:0; box-sizing:border-box;
+            margin:0; padding:0 4px; font-size:2.2vh;
+            border-radius:10px; line-height:1.2;
+            display:flex; align-items:center; justify-content:center;
+            overflow:hidden; white-space:nowrap; text-overflow:ellipsis;
+        }
+        .col button:hover { filter:brightness(1.12); }
+        .col-colors .color-btn { min-height:0; }
+        .col-tools button { background-color:#546e7a; }
+        .col-tools #penMouseBtn { background-color:#37474f; }
+        .col-tools #shapeBtn.state-on { background-color:#2e9e3f; }
+        .col-ppt button { background-color:#4CAF50; }
+        .col-ppt .btn-start { background-color:#2196F3; }
+        .col-ppt .btn-stop { background-color:#f44336; }
+        @media (max-width:520px) {
+            .cols { --row-h:clamp(40px, 6.8vh, 52px); gap:6px; }
+            .col { gap:6px; }
+            .col button { font-size:1.9vh; }
+        }
+
+        .status {
+            margin-top: 10px;
+            background-color: #ffffff;
+            border-radius: 4px;
+        }
+
+        #screenCanvas {
+            border: 0px solid #ddd;
+            margin-top: 20px;
+            background-color: #000;
+            cursor: crosshair;
+        }
+
+        .coordinates {
+            margin-top: 10px;
+            font-family: monospace;
+        }
+
+        #screenContainer {
+            max-width: 100%;
+            margin-top: -15px;
+        }
+
+        #screenCanvas {
+            border: 1px solid #ddd;
+            background-color: #000;
+            cursor: crosshair;
+            display: block;
+        }
+
+        .btn-start {
+            background-color: #2196F3;
+        }
+
+        .btn-stop {
+            background-color: #f44336;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div>
+            <div class="status" id="status">状态: 未连接</div>
+            <div id="screenContainer">
+                <canvas id="screenCanvas"></canvas>
+            </div>
+            <div class="coordinates" id="coordinates">坐标:(0,0)|屏幕分辨率:未获取</div>
+        </div>
+
+        <!-- 屏幕共享常开且不允许关闭：仅保留隐藏占位兼容旧逻辑，页面上没有任何开关入口 -->
+        <button id="screenBtn" style="display:none" aria-hidden="true"></button>
+
+        <div class="control-panel">
+            <div class="cols">
+                <!-- 第一列：画笔颜色 -->
+                <div class="col col-colors">
+                    <button class="color-btn" data-color="black" style="background:#111;color:#fff">黑</button>
+                    <button class="color-btn" data-color="red" style="background:#e53935">红</button>
+                    <button class="color-btn" data-color="green" style="background:#2e9e3f">绿</button>
+                    <button class="color-btn" data-color="blue" style="background:#1e6fe0">蓝</button>
+                    <button class="color-btn" data-color="yellow" style="background:#f2c200;color:#333">黄</button>
+                    <button class="color-btn" data-color="white" style="background:#fefefe;color:#222;border:1px solid #bbb">白</button>
+                </div>
+
+                <!-- 第二列：6 个画板工具，与颜色列、PPT 控制列逐行对齐 -->
+                <div class="col col-tools">
+                    <button id="penMouseBtn">切换画笔</button>
+                    <button id="eraserBtn">切换橡皮</button>
+                    <button id="clearBtn">一键清空</button>
+                    <button id="whiteboardBtn">内置白板</button>
+                    <button id="replayBtn">墨迹重绘</button>
+                    <button id="shapeBtn">墨迹识别</button>
+                </div>
+
+                <!-- 第三列：原有的 PPT 放映控制 -->
+                <div class="col col-ppt">
+                    <button id="startBtn" class='btn-start'>开始放映</button>
+                    <button id="stopBtn" class='btn-stop'>结束放映</button>
+                    <button id="prevBtn">上一动画</button>
+                    <button id="nextBtn">下一动画</button>
+                    <button id="firstBtn">首个页面</button>
+                    <button id="lastBtn">最后一页</button>
+                </div>
+            </div>
+        </div>
+
+
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const startBtn = document.getElementById('startBtn');
+                const stopBtn = document.getElementById('stopBtn');
+                const prevBtn = document.getElementById('prevBtn');
+                const nextBtn = document.getElementById('nextBtn');
+                const firstBtn = document.getElementById('firstBtn');
+                const lastBtn = document.getElementById('lastBtn');
+                const screenBtn = document.getElementById('screenBtn');
+                const statusDiv = document.getElementById('status');
+                const canvas = document.getElementById('screenCanvas');
+                const ctx = canvas.getContext('2d');
+                const coordinatesDiv = document.getElementById('coordinates');
+
+                // ===== 屏幕改用根远控 /ws（与 app.js 同协议），不再用自带 /screen =====
+                let isScreenSharing = false;
+                let rws = null, rconnected = false, rauthed = false, rscreenReady = false;
+                let rvideoCanvas = document.createElement('canvas');
+                let rvctx = rvideoCanvas.getContext('2d');
+                let rvdx = 0, rvdy = 0, rvdw = 0, rvdh = 0, rimgW = 0, rimgH = 0;
+                let rtcpBuf = new Uint8Array(0), rrenderPending = false;
+                let screenWidth = 1920, screenHeight = 1080; // 由首帧刷新，仅用于坐标显示
+                let screenInfo = { width: 1920, height: 1080, offsetX: 0, offsetY: 0, captureWidth: 1920, captureHeight: 1080 };
+
+                // 更新状态显示
+                function updateStatus(text) {
+                    statusDiv.textContent = `状态: ${text}`;
+                }
+
+                // 更新坐标显示
+                function updateCoordinates(x, y) {
+                    coordinatesDiv.textContent =
+                        `坐标:(${x},${y})|屏幕:${screenWidth}x${screenHeight}|`;
+                    //`捕获:${screenInfo.captureWidth}x${screenInfo.captureHeight}|` +
+                    //`偏移:(${screenInfo.offsetX},${screenInfo.offsetY})`;
+                }
+                function calculateScreenCoordinates(canvasX, canvasY) {
+                    const [nx, ny] = rNorm(canvasX, canvasY);
+                    return { x: Math.floor(nx / 65535 * Math.max(1, rimgW)), y: Math.floor(ny / 65535 * Math.max(1, rimgH)) };
+                }
+                // 调整Canvas大小以匹配屏幕比例
+                function resizeCanvas() {
+                    const container = document.getElementById('screenContainer');
+                    const containerWidth = container.clientWidth || 640;
+                    const maxHeight = window.innerHeight * 0.6;
+                    const canvasWidth = containerWidth;
+                    const canvasHeight = Math.min(containerWidth * 9 / 16, maxHeight);
+                    canvas.width = Math.round(canvasWidth);
+                    canvas.height = Math.round(canvasHeight);
+                    canvas.style.width = canvasWidth + 'px';
+                    canvas.style.height = canvasHeight + 'px';
+                    if (rscreenReady) rRenderAll();
+                }
+
+                // 窗口大小改变时重新调整Canvas
+                window.addEventListener('resize', resizeCanvas);
+
+                // 发送命令到服务器
+                function sendCommand(cmd) {
+                    fetch(window.withAccessCode('/control'), {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ cmd: cmd })
+                    })
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error('网络响应不正常');
+                            }
+                            return response.text();
+                        })
+                        .then(data => {
+                            updateStatus(data);
+                            if (data === 'OK') {
+                                checkStatus();
+                            }
+                        })
+                        .catch(error => {
+                            updateStatus(`错误: ${error.message}`);
+                            console.error('命令发送错误:', error);
+                        });
+                }
+
+                // 检查当前状态
+                function checkStatus() {
+                    fetch(window.withAccessCode('/control?cmd=status'))
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error('状态检查失败');
+                            }
+                            return response.json();
+                        })
+                        .then(data => {
+                            updateStatus(`已连接 - 当前幻灯片: ${data.currentSlide}/${data.totalSlides}`);
+                        })
+                        .catch(error => {
+                            updateStatus('连接错误');
+                            console.error('状态检查错误:', error);
+                        });
+                }
+
+                // ===== 根远控 /ws 客户端（协议与渲染移植自 app.js，画到 #screenCanvas）=====
+                let rReconnectTimer = 0;
+                async function rConnect() {
+                    // 手动重连会先 close 旧连接，先摘掉它的 onclose，避免重复排队重连
+                    if (rws) { try { rws.onclose = null; rws.close(); } catch (e) {} }
+                    const cfg = await window.painterWsConfig();
+                    if (cfg && cfg.needCompat && !cfg.compat && cfg.error) {
+                        updateStatus('兼容通道未就绪：' + cfg.error + '，重试中…');
+                    }
+                    rws = new WebSocket(window.painterWsUrl('/ws', cfg));
+                    rws.binaryType = 'arraybuffer';
+                    rws.onopen = () => { rconnected = true; updateStatus('画面连接中…'); };
+                    rws.onclose = () => {
+                        rconnected = false; rauthed = false; rscreenReady = false;
+                        // 丢弃断线时残留的半帧，否则重连后的新帧会被拼到残帧后面解析错位
+                        rtcpBuf = new Uint8Array(0);
+                        rFrameChain = Promise.resolve();
+                        isScreenSharing = false;
+                        updateStatus('画面断开，重连中…'); rRenderAll();
+                        // 屏幕共享常开且不允许关闭：任何时刻断开都自动重连
+                        if (rReconnectTimer) clearTimeout(rReconnectTimer);
+                        rReconnectTimer = setTimeout(() => {
+                            rReconnectTimer = 0;
+                            if (!rconnected) rConnect();
+                        }, 800);
+                    };
+                    rws.onerror = () => { try { rws.close(); } catch (e) {} };
+                    rws.onmessage = rOnMessage;
+                }
+                function rDisconnect() {
+                    isScreenSharing = false; screenBtn.textContent = '开始屏幕共享';
+                    if (rws) { try { rws.close(); } catch (e) {} rws = null; }
+                    rconnected = false; rauthed = false; rscreenReady = false;
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    updateStatus('屏幕共享已停止');
+                }
+                function rOnMessage(e) {
+                    const incoming = new Uint8Array(e.data);
+                    const merged = new Uint8Array(rtcpBuf.length + incoming.length);
+                    merged.set(rtcpBuf, 0); merged.set(incoming, rtcpBuf.length);
+                    rtcpBuf = merged;
+                    while (rtcpBuf.length >= 4) {
+                        const dv = new DataView(rtcpBuf.buffer, rtcpBuf.byteOffset, rtcpBuf.length);
+                        const bodyLen = dv.getUint32(0, true);
+                        if (bodyLen < 1 || bodyLen > 64 * 1024 * 1024) { rtcpBuf = new Uint8Array(0); break; }
+                        const total = 4 + bodyLen;
+                        if (rtcpBuf.length < total) break;
+                        rDispatch(rtcpBuf[4], rtcpBuf.slice(5, total));
+                        rtcpBuf = rtcpBuf.slice(total);
+                    }
+                }
+                // 视频帧必须串行解码：JpegRegions 是区域差分帧，依赖前一帧内容，
+                // 并发/乱序解码会留下残影、画面跳动，拖拽时尤其明显。
+                let rFrameChain = Promise.resolve();
+                function rDispatch(type, payload) {
+                    if (type === 3) {
+                        rFrameChain = rFrameChain.then(() => rDecodeFrame(payload)).catch(() => {});
+                    } else if (type === 21) rAuthResult(payload);   // CtrlAuthOk
+                }
+                function rAuthResult(payload) {
+                    if (payload.length < 1) return;
+                    if (payload[0] === 1) {
+                        rauthed = true; isScreenSharing = true; screenBtn.textContent = '停止屏幕共享';
+                        updateStatus('画面已连接');
+                        // 低带宽档：960px 宽 / JPEG 35% / 60fps / JpegRegions 区域差分。
+                        // 分辨率与画质都降下来，抓屏缩放、编码、WebSocket 传输开销骤减，
+                        // 鼠标输入不再排在视频帧后面，拖拽才跟手；清晰度不重要。
+                        // QualityConfig.Encode(): [Mode][Quality][MaxWidth:int32 LE][Fps][ResyncSec][BlockSize]
+                        // 960 = 0x000003C0 -> C0 03 00 00
+                        rSendControl(10, new Uint8Array([0, 35, 192, 3, 0, 0, 60, 4, 32]));
+                    } else if (payload[0] === 2) {
+                        rSendAuth(window.ACCESS_CODE || '');       // 需要密码：用 URL 的 code（=远控密码）
+                    } else if (payload[0] === 0) {
+                        updateStatus('画面密码错误（code 与远控密码不一致）');
+                    }
+                }
+                function rSendAuth(pwd) {
+                    if (!rws || rws.readyState !== 1) return;
+                    const bytes = new TextEncoder().encode(pwd);
+                    const buf = new ArrayBuffer(4 + 1 + bytes.length);
+                    const dv = new DataView(buf);
+                    dv.setUint32(0, 1 + bytes.length, true); dv.setUint8(4, 20);
+                    new Uint8Array(buf, 5).set(bytes); rws.send(buf);
+                }
+                function rSendControl(type, payload) {
+                    if (!rws || rws.readyState !== 1) return;
+                    const buf = new ArrayBuffer(4 + 1 + payload.length);
+                    const dv = new DataView(buf);
+                    dv.setUint32(0, 1 + payload.length, true); dv.setUint8(4, type);
+                    new Uint8Array(buf, 5).set(payload); rws.send(buf);
+                }
+                // 与「屏幕显示与控制」(app.js) 相同的 MouseEvent 报文：
+                // subtype 0=移动 1=按下 2=抬起 3=滚轮；wheel 为滚轮格数（正上负下）
+                function rSendMouse(subtype, btn, x, y, wheel) {
+                    if (!rconnected || !rauthed || !rws || rws.readyState !== 1) return;
+                    try {
+                        const pkt = new ArrayBuffer(13); const dv = new DataView(pkt);
+                        dv.setUint32(0, 9, true); dv.setUint8(4, 4); dv.setUint8(5, subtype);
+                        dv.setUint16(6, x & 0xffff, true); dv.setUint16(8, y & 0xffff, true);
+                        dv.setUint8(10, btn); dv.setInt16(11, wheel | 0, true); rws.send(pkt);
+                    } catch (e) {}
+                }
+                function rNorm(cx, cy) {
+                    if (!rscreenReady || rvdw <= 0) return [0, 0];
+                    const rect = canvas.getBoundingClientRect();
+                    if (rect.width <= 0) return [0, 0];
+                    const bx = cx * (canvas.width / rect.width), by = cy * (canvas.height / rect.height);
+                    const nx = (bx - rvdx) / rvdw, ny = (by - rvdy) / rvdh;
+                    return [Math.round(Math.max(0, Math.min(1, nx)) * 65535), Math.round(Math.max(0, Math.min(1, ny)) * 65535)];
+                }
+                async function rDecodeFrame(payload) {
+                    if (payload.length < 11) return;
+                    const flags = payload[0], codec = payload[1];
+                    const w = (payload[2] | payload[3] << 8 | payload[4] << 16 | payload[5] << 24) >>> 0;
+                    const h = (payload[6] | payload[7] << 8 | payload[8] << 16 | payload[9] << 24) >>> 0;
+                    rimgW = w; rimgH = h; screenWidth = w; screenHeight = h;
+                    try {
+                        if (codec === 0 && (flags & 1)) await rDrawRegions(payload, w, h);
+                        else if (codec === 2) {
+                            const inf = await rInflateRaw(payload.subarray(14)); if (!inf) return;
+                            for (let i = 0; i < inf.length; i += 4) { const b = inf[i]; inf[i] = inf[i + 2]; inf[i + 2] = b; }
+                            rEnsureVideoSize(w, h); rvctx.putImageData(new ImageData(new Uint8ClampedArray(inf), w, h), 0, 0); rPresent(w, h);
+                        } else {
+                            // 直接 Blob 解码，去掉 Base64 与 fetch(data:) 中转
+                            const bm = await createImageBitmap(new Blob([payload.subarray(14)], { type: 'image/jpeg' }));
+                            rEnsureVideoSize(w, h); rvctx.drawImage(bm, 0, 0, w, h); bm.close && bm.close(); rPresent(w, h);
+                        }
+                    } catch (err) { }
+                }
+                async function rDrawRegions(payload, w, h) {
+                    rEnsureVideoSize(w, h);
+                    const jpegBlocks = (payload[0] & 2) !== 0;
+                    const dv = new DataView(payload.buffer, payload.byteOffset, payload.byteLength);
+                    let off = 14; const blocks = [];
+                    while (off + 20 <= payload.length) {
+                        const bx = dv.getUint32(off, true); off += 4; const by = dv.getUint32(off, true); off += 4;
+                        const bw = dv.getUint32(off, true); off += 4; const bh = dv.getUint32(off, true); off += 4;
+                        const len = dv.getUint32(off, true); off += 4;
+                        if (off + len > payload.length) break;
+                        blocks.push({ x: bx, y: by, w: bw, h: bh, data: payload.subarray(off, off + len), jpeg: jpegBlocks }); off += len;
+                    }
+                    for (const b of blocks) {
+                        try {
+                            if (b.jpeg) {
+                                const bm = await createImageBitmap(new Blob([b.data], { type: 'image/jpeg' }));
+                                rvctx.drawImage(bm, b.x, b.y, b.w, b.h); bm.close && bm.close();
+                            } else {
+                                const inf = await rInflateRaw(b.data); if (!inf) continue;
+                                const imgData = new ImageData(new Uint8ClampedArray(inf), b.w, b.h);
+                                const c2 = document.createElement('canvas'); c2.width = b.w; c2.height = b.h;
+                                c2.getContext('2d').putImageData(imgData, 0, 0); rvctx.drawImage(c2, b.x, b.y, b.w, b.h);
+                            }
+                        } catch (e) { }
+                    }
+                    rPresent(w, h);
+                }
+                function rEnsureVideoSize(w, h) { if (rvideoCanvas.width !== w || rvideoCanvas.height !== h) { rvideoCanvas.width = w; rvideoCanvas.height = h; } }
+                function rPresent(w, h) {
+                    const cw = canvas.width, ch = canvas.height;
+                    const scale = Math.min(cw / w, ch / h);
+                    rvdw = w * scale; rvdh = h * scale; rvdx = (cw - rvdw) / 2; rvdy = (ch - rvdh) / 2;
+                    rscreenReady = true; rRequestRender();
+                }
+                function rRenderAll() {
+                    const cw = canvas.width, ch = canvas.height;
+                    ctx.fillStyle = '#000'; ctx.fillRect(0, 0, cw, ch);
+                    if (rscreenReady && rvideoCanvas.width > 0) { ctx.imageSmoothingEnabled = false; ctx.drawImage(rvideoCanvas, rvdx, rvdy, rvdw, rvdh); }
+                }
+                function rRequestRender() { if (rrenderPending) return; rrenderPending = true; requestAnimationFrame(() => { rrenderPending = false; rRenderAll(); }); }
+                async function rInflateRaw(input) {
+                    if (typeof DecompressionStream === 'undefined') return null;
+                    try { const ds = new DecompressionStream('deflate-raw'); const stream = new Blob([input]).stream().pipeThrough(ds); return new Uint8Array(await new Response(stream).arrayBuffer()); } catch (e) { return null; }
+                }
+                function rBytesToBase64(bytes) { let bin = ''; const chunk = 0x8000; for (let i = 0; i < bytes.length; i += chunk) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk)); return btoa(bin); }
+
+                // ---- PPT 控制按钮 ----
+                startBtn.addEventListener('click', () => sendCommand('start'));
+                stopBtn.addEventListener('click', () => sendCommand('stop'));
+                prevBtn.addEventListener('click', () => sendCommand('prev'));
+                nextBtn.addEventListener('click', () => sendCommand('next'));
+                firstBtn.addEventListener('click', () => sendCommand('first'));
+                lastBtn.addEventListener('click', () => sendCommand('last'));
+
+                // ---- 画板工具按钮：直接调本机画板功能，不必在缩小的预览里点 ----
+                const shapeBtn = document.getElementById('shapeBtn');
+                function applyShapeState(on) {
+                    if (typeof on !== 'boolean') return;
+                    shapeBtn.textContent = on ? '墨迹识别：开' : '墨迹识别：关';
+                    shapeBtn.classList.toggle('state-on', on);
+                }
+                function sendDraw(cmd, arg, label, quiet) {
+                    let url = '/api/draw?cmd=' + encodeURIComponent(cmd);
+                    if (arg) url += '&arg=' + encodeURIComponent(arg);
+                    fetch(window.withAccessCode(url), { cache: 'no-store' })
+                        .then(r => r.json().then(j => ({ ok: r.ok && j.ok, err: j.error, state: j.shapeOn })))
+                        .then(v => {
+                            applyShapeState(v.state);
+                            if (quiet) return;
+                            updateStatus(v.ok ? (label || '画板操作已执行') : '画板操作失败：' + (v.err || '未就绪'));
+                        })
+                        .catch(e => { if (!quiet) updateStatus('画板操作失败：' + e.message); });
+                }
+                document.querySelectorAll('.color-btn').forEach(b => {
+                    b.addEventListener('click', () => sendDraw('color', b.dataset.color));
+                });
+                document.getElementById('penMouseBtn').addEventListener('click', () => sendDraw('mode'));
+                document.getElementById('eraserBtn').addEventListener('click', () => sendDraw('eraser', '', '已切换橡皮'));
+                document.getElementById('clearBtn').addEventListener('click', () => sendDraw('clear'));
+                document.getElementById('replayBtn').addEventListener('click', () => sendDraw('replay', '', '墨迹重绘已开始'));
+                shapeBtn.addEventListener('click', () => sendDraw('shape', '', '墨迹识别已切换'));
+                // 进入页面先同步墨迹识别的真实开关状态（只查询、不翻转）
+                sendDraw('shape', 'query', '', true);
+                // 内置白板与「切换画笔」一样是 toggle：点一次进入，再点一次退出
+                let whiteboardOn = false;
+                const whiteboardBtn = document.getElementById('whiteboardBtn');
+                whiteboardBtn.addEventListener('click', () => {
+                    whiteboardOn = !whiteboardOn;
+                    whiteboardBtn.textContent = whiteboardOn ? '退出白板' : '内置白板';
+                    sendDraw('whiteboard', '', whiteboardOn ? '已进入内置白板' : '已退出内置白板');
+                });
+                // 屏幕共享常开，不再提供任何关闭入口
+
+                // ---- 屏幕预览反控：与「屏幕显示与控制」一致，光标实时移动 + 按住拖拽 ----
+                const RBTN_LEFT = 1, RBTN_RIGHT = 2, RBTN_MIDDLE = 3;
+                const rPointers = new Map();
+                let rLeftDown = false, rLastX = 0, rLastY = 0;
+                // 高刷鼠标一秒能产生上千个 pointermove，逐条发会让服务端 SetCursorPos
+                // 洪水般调用，反而拖慢拖拽。合并到每个动画帧只发最新坐标（~60Hz）：
+                // 跟手，又不给链路添堵；按下/抬起等关键事件立即直发，不进队列。
+                let rPendingMove = null, rMoveRaf = 0;
+                canvas.style.touchAction = 'none';
+                canvas.style.userSelect = 'none';
+
+                function rQueueMove(nx, ny) {
+                    rPendingMove = [nx, ny];
+                    if (rMoveRaf) return;
+                    rMoveRaf = requestAnimationFrame(() => {
+                        rMoveRaf = 0;
+                        if (!rPendingMove) return;
+                        const [x, y] = rPendingMove; rPendingMove = null;
+                        rSendMouse(0, 0, x, y);
+                    });
+                }
+                function rCancelPendingMove() { rPendingMove = null; }
+
+                function rPos(e) {
+                    const rect = canvas.getBoundingClientRect();
+                    return [e.clientX - rect.left, e.clientY - rect.top];
+                }
+                function rPoint(e) {
+                    const [x, y] = rPos(e);
+                    const sc = calculateScreenCoordinates(x, y);
+                    updateCoordinates(sc.x, sc.y);
+                    const [nx, ny] = rNorm(x, y);
+                    rLastX = nx; rLastY = ny;
+                    return [nx, ny];
+                }
+                function rReleaseAll() {
+                    rCancelPendingMove();
+                    // 失焦时所有按下的指针都要补发抬起，否则远端右键/中键会一直卡住
+                    rPointers.forEach(function (btn) {
+                        try { rSendMouse(2, btn, rLastX, rLastY); } catch (e) {}
+                    });
+                    rPointers.clear();
+                    rLeftDown = false;
+                }
+
+                canvas.addEventListener('pointerdown', (e) => {
+                    e.preventDefault();
+                    if (!rscreenReady) return;   // 首帧未到时归一化坐标无意义，避免误点到左上角
+                    try { canvas.setPointerCapture(e.pointerId); } catch (_) {}
+                    rCancelPendingMove();
+                    const [nx, ny] = rPoint(e);
+                    const btn = e.button === 0 ? RBTN_LEFT
+                        : (e.button === 2 ? RBTN_RIGHT : (e.button === 1 ? RBTN_MIDDLE : 0));
+                    if (!btn) return;
+                    rPointers.set(e.pointerId, btn);
+                    // 先落到点击位置再按下；保持按下状态，后续 pointermove 即为按住拖拽
+                    rSendMouse(0, 0, nx, ny);
+                    rSendMouse(1, btn, nx, ny);
+                    if (btn === RBTN_LEFT) rLeftDown = true;
+                });
+
+                canvas.addEventListener('pointermove', (e) => {
+                    const [nx, ny] = rPoint(e);
+                    // 光标实时跟随；左键仍按着时服务端即为「拖拽移动」
+                    rQueueMove(nx, ny);
+                });
+
+                function rOnPointerUp(e) {
+                    const btn = rPointers.get(e.pointerId);
+                    if (!btn) return;
+                    rPointers.delete(e.pointerId);
+                    rCancelPendingMove();
+                    const [nx, ny] = rPoint(e);
+                    rSendMouse(0, 0, nx, ny);
+                    rSendMouse(2, btn, nx, ny);
+                    if (btn === RBTN_LEFT) rLeftDown = false;
+                }
+                canvas.addEventListener('pointerup', rOnPointerUp);
+                canvas.addEventListener('pointercancel', rOnPointerUp);
+                canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+                canvas.addEventListener('wheel', (e) => {
+                    e.preventDefault();
+                    if (!rscreenReady) return;
+                    const [nx, ny] = rPoint(e);
+                    const steps = Math.max(1, Math.min(30, Math.round(Math.abs(e.deltaY) / 40)));
+                    const dir = e.deltaY > 0 ? -1 : 1;   // 下滚为负，与 app.js 一致
+                    rSendMouse(3, 0, nx, ny, dir * steps);
+                }, { passive: false });
+                window.addEventListener('blur', rReleaseAll);
+
+                // 初始状态检查
+                checkStatus();
+                resizeCanvas();
+                setInterval(checkStatus, 5000);
+                rConnect();
+            });
+        </script>
+</body>
+</html>

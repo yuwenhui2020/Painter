@@ -1,0 +1,352 @@
+<!-- Windows 11 Fluent 控件重绘字典：中性浅灰表面、4px 控件圆角、系统蓝强调色，
+     按下 / 悬停用半透明叠加层而不是整块变色。
+     与 Resources/Styles/Light.xaml、Dark.xaml 的关系：那两个字典只提供随主题变化的
+     颜色值（键名一致，运行时按主题整体替换），本字典只负责“怎么画”，
+     因此所有颜色一律用 DynamicResource 引用，避免在深浅主题下取到错误的固定值。 -->
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:ui="http://schemas.inkore.net/lib/ui/wpf/modern">
+
+    <!-- ===== 语义色：危险 / 成功等强调色与主题无关，浅深色下取同一值 ===== -->
+    <SolidColorBrush x:Key="FluentDangerBrush" Color="#FFC42B1C"/>
+    <SolidColorBrush x:Key="FluentGreenBrush" Color="#FF0F7B0F"/>
+    <SolidColorBrush x:Key="FluentOrangeBrush" Color="#FF9D5D00"/>
+    <SolidColorBrush x:Key="FluentYellowBrush" Color="#FF8A6D00"/>
+    <SolidColorBrush x:Key="FluentPurpleBrush" Color="#FF7A3EB1"/>
+    <SolidColorBrush x:Key="FluentTealBrush" Color="#FF007C89"/>
+
+    <!-- ===== 圆角：Fluent 的控件 4px、浮层 8px ===== -->
+    <CornerRadius x:Key="FluentControlCornerRadius">4</CornerRadius>
+    <CornerRadius x:Key="FluentOverlayCornerRadius">8</CornerRadius>
+    <CornerRadius x:Key="FluentFieldCornerRadius">4</CornerRadius>
+
+    <!-- ===== 字体：Win11 用 Segoe UI Variable，系统没有时回退到 Segoe UI ===== -->
+    <FontFamily x:Key="AppFontFamily">Segoe UI Variable Text, Segoe UI, Microsoft YaHei UI, Microsoft YaHei</FontFamily>
+
+    <!-- ==================================================================
+         按钮：Fluent 的“次级按钮”——浅色填充、1px 描边、圆角 4px，
+         悬停 / 按下用叠加层表达，禁用降透明度。
+         工具栏按钮在调用处把 Background 置为半透明灰，因此仍保持原有可读性。
+         ================================================================== -->
+    <Style TargetType="{x:Type Button}">
+        <Setter Property="Background" Value="{DynamicResource FluentControlFillBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource FluentTextPrimaryBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource FluentControlStrokeBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="FontFamily" Value="{DynamicResource AppFontFamily}"/>
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="Padding" Value="12,5"/>
+        <Setter Property="SnapsToDevicePixels" Value="True"/>
+        <Setter Property="UseLayoutRounding" Value="True"/>
+        <Setter Property="HorizontalContentAlignment" Value="Center"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type Button}">
+                    <Grid>
+                        <Border x:Name="ButtonBorder"
+                                CornerRadius="{StaticResource FluentControlCornerRadius}"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}">
+                            <ContentPresenter x:Name="ButtonContent"
+                                              Margin="{TemplateBinding Padding}"
+                                              HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                              VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
+                        </Border>
+                        <Border x:Name="StateOverlay"
+                                CornerRadius="{StaticResource FluentControlCornerRadius}"
+                                Background="{DynamicResource FluentHoverOverlayBrush}"
+                                Opacity="0"
+                                IsHitTestVisible="False"/>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="StateOverlay" Property="Opacity" Value="1"/>
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="StateOverlay" Property="Background" Value="{DynamicResource FluentPressedOverlayBrush}"/>
+                            <Setter TargetName="StateOverlay" Property="Opacity" Value="1"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.4"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- 主操作按钮（确定 / 是 / 抽奖一类）：系统蓝实底 + 白字 -->
+    <Style x:Key="PrimaryButtonStyle" TargetType="{x:Type Button}" BasedOn="{StaticResource {x:Type Button}}">
+        <Setter Property="Background" Value="{DynamicResource FluentAccentFillBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource FluentAccentFillBrush}"/>
+        <Setter Property="Foreground" Value="#FFFFFFFF"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+    </Style>
+
+    <!-- 破坏性操作按钮（删除 / 退出）：系统红实底 + 白字 -->
+    <Style x:Key="DangerButtonStyle" TargetType="{x:Type Button}" BasedOn="{StaticResource {x:Type Button}}">
+        <Setter Property="Background" Value="{StaticResource FluentDangerBrush}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource FluentDangerBrush}"/>
+        <Setter Property="Foreground" Value="#FFFFFFFF"/>
+    </Style>
+
+    <!-- ==================================================================
+         分组卡片：Win11 设置页的卡片式分组——白底、1px 描边、8px 圆角，
+         标题作为上方的小号灰色标签。
+         ================================================================== -->
+    <Style TargetType="{x:Type GroupBox}">
+        <Setter Property="FontFamily" Value="{DynamicResource AppFontFamily}"/>
+        <Setter Property="Foreground" Value="{DynamicResource FluentTextPrimaryBrush}"/>
+        <Setter Property="Margin" Value="0,0,0,12"/>
+        <Setter Property="SnapsToDevicePixels" Value="True"/>
+        <Setter Property="UseLayoutRounding" Value="True"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type GroupBox}">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <TextBlock Grid.Row="0"
+                                   Text="{TemplateBinding Header}"
+                                   FontSize="13"
+                                   FontWeight="SemiBold"
+                                   Margin="2,0,0,8"
+                                   Foreground="{DynamicResource FluentTextSecondaryBrush}"/>
+                        <Border Grid.Row="1"
+                                CornerRadius="{StaticResource FluentOverlayCornerRadius}"
+                                Background="{DynamicResource FluentCardBackgroundBrush}"
+                                BorderBrush="{DynamicResource FluentCardBorderBrush}"
+                                BorderThickness="1"
+                                Padding="16,14">
+                            <ContentPresenter/>
+                        </Border>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ==================================================================
+         滑动条：4px 圆角轨道 + 系统蓝已填充段 + 白底蓝环滑块
+         ================================================================== -->
+    <Style x:Key="FluentSliderFillStyle" TargetType="{x:Type RepeatButton}">
+        <Setter Property="IsTabStop" Value="False"/>
+        <Setter Property="Focusable" Value="False"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type RepeatButton}">
+                    <Border Height="4" CornerRadius="2" VerticalAlignment="Center"
+                            Background="{DynamicResource FluentAccentFillBrush}"/>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="FluentSliderRemainStyle" TargetType="{x:Type RepeatButton}">
+        <Setter Property="IsTabStop" Value="False"/>
+        <Setter Property="Focusable" Value="False"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type RepeatButton}">
+                    <Border Background="Transparent"/>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="FluentSliderThumbStyle" TargetType="{x:Type Thumb}">
+        <Setter Property="Width" Value="20"/>
+        <Setter Property="Height" Value="20"/>
+        <Setter Property="IsTabStop" Value="False"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type Thumb}">
+                    <Grid>
+                        <Ellipse StrokeThickness="2">
+                            <Ellipse.Fill>
+                                <SolidColorBrush Color="{DynamicResource FluentThumbFillColor}"/>
+                            </Ellipse.Fill>
+                            <Ellipse.Stroke>
+                                <SolidColorBrush Color="{DynamicResource FluentThumbStrokeColor}"/>
+                            </Ellipse.Stroke>
+                        </Ellipse>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style TargetType="{x:Type Slider}">
+        <Setter Property="FontFamily" Value="{DynamicResource AppFontFamily}"/>
+        <Setter Property="Foreground" Value="{DynamicResource FluentTextPrimaryBrush}"/>
+        <Setter Property="SnapsToDevicePixels" Value="True"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type Slider}">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <TextBlock Grid.Row="0"
+                                   Text="{Binding Path=(ui:ControlHelper.Header), RelativeSource={RelativeSource TemplatedParent}}"
+                                   FontSize="{TemplateBinding FontSize}"
+                                   Margin="0,0,0,6"
+                                   Foreground="{DynamicResource FluentTextSecondaryBrush}"/>
+                        <Grid Grid.Row="1" Height="28" VerticalAlignment="Center">
+                            <Border Height="4" CornerRadius="2" VerticalAlignment="Center"
+                                    Background="{DynamicResource FluentSliderTrackBrush}"/>
+                            <Track x:Name="PART_Track">
+                                <Track.DecreaseRepeatButton>
+                                    <RepeatButton Command="{x:Static Slider.DecreaseLarge}"
+                                                  Style="{StaticResource FluentSliderFillStyle}"/>
+                                </Track.DecreaseRepeatButton>
+                                <Track.IncreaseRepeatButton>
+                                    <RepeatButton Command="{x:Static Slider.IncreaseLarge}"
+                                                  Style="{StaticResource FluentSliderRemainStyle}"/>
+                                </Track.IncreaseRepeatButton>
+                                <Track.Thumb>
+                                    <Thumb Style="{StaticResource FluentSliderThumbStyle}"/>
+                                </Track.Thumb>
+                            </Track>
+                        </Grid>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ==================================================================
+         复选框：Win11 的圆角方块——选中时填系统蓝并显示白色对勾
+         ================================================================== -->
+    <Style TargetType="{x:Type CheckBox}">
+        <Setter Property="FontFamily" Value="{DynamicResource AppFontFamily}"/>
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="Foreground" Value="{DynamicResource FluentTextPrimaryBrush}"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+        <Setter Property="SnapsToDevicePixels" Value="True"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type CheckBox}">
+                    <StackPanel Orientation="Horizontal" Background="Transparent">
+                        <Grid Width="20" Height="20" VerticalAlignment="Center">
+                            <Border x:Name="Box" CornerRadius="4"
+                                    BorderThickness="1.5"
+                                    BorderBrush="{DynamicResource FluentControlStrongStrokeBrush}"
+                                    Background="{DynamicResource FluentCardBackgroundBrush}"/>
+                            <Path x:Name="Check"
+                                  Data="M 4,10 L 8.2,14.2 L 16,6.2"
+                                  Stroke="#FFFFFFFF"
+                                  StrokeThickness="2"
+                                  StrokeStartLineCap="Round"
+                                  StrokeEndLineCap="Round"
+                                  StrokeLineJoin="Round"
+                                  Visibility="Hidden"/>
+                        </Grid>
+                        <ContentPresenter Margin="10,0,0,0"
+                                          VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                          RecognizesAccessKey="True"/>
+                    </StackPanel>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="Box" Property="Background" Value="{DynamicResource FluentAccentFillBrush}"/>
+                            <Setter TargetName="Box" Property="BorderBrush" Value="{DynamicResource FluentAccentFillBrush}"/>
+                            <Setter TargetName="Check" Property="Visibility" Value="Visible"/>
+                        </Trigger>
+                        <Trigger Property="IsChecked" Value="{x:Null}">
+                            <Setter TargetName="Box" Property="Opacity" Value="0.5"/>
+                        </Trigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Box" Property="Opacity" Value="0.85"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.4"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- 分段控件单项（主题切换用）：未选中透明，选中抬升为白色卡片并加 1px 描边 -->
+    <Style x:Key="SegmentItemStyle" TargetType="{x:Type RadioButton}">
+        <Setter Property="FontFamily" Value="{DynamicResource AppFontFamily}"/>
+        <Setter Property="FontSize" Value="13"/>
+        <Setter Property="Foreground" Value="{DynamicResource FluentTextSecondaryBrush}"/>
+        <Setter Property="SnapsToDevicePixels" Value="True"/>
+        <Setter Property="UseLayoutRounding" Value="True"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type RadioButton}">
+                    <Border x:Name="Segment"
+                            CornerRadius="6"
+                            Background="Transparent"
+                            BorderThickness="1"
+                            BorderBrush="Transparent"
+                            Padding="10,5">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <!-- 顺序即优先级：IsChecked 放在最后，保证选中段不会被悬停底色盖掉 -->
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Segment" Property="Background" Value="{DynamicResource FluentHoverOverlayBrush}"/>
+                        </Trigger>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="Segment" Property="Background" Value="{DynamicResource FluentCardBackgroundBrush}"/>
+                            <Setter TargetName="Segment" Property="BorderBrush" Value="{DynamicResource FluentCardBorderBrush}"/>
+                            <Setter Property="Foreground" Value="{DynamicResource FluentTextPrimaryBrush}"/>
+                            <Setter Property="FontWeight" Value="SemiBold"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.4"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- 单选按钮：Win11 圆环 + 选中时系统蓝实心圆点 -->
+    <Style TargetType="{x:Type RadioButton}">
+        <Setter Property="FontFamily" Value="{DynamicResource AppFontFamily}"/>
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="Foreground" Value="{DynamicResource FluentTextPrimaryBrush}"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+        <Setter Property="SnapsToDevicePixels" Value="True"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type RadioButton}">
+                    <StackPanel Orientation="Horizontal" Background="Transparent">
+                        <Grid Width="20" Height="20" VerticalAlignment="Center">
+                            <Ellipse x:Name="Ring"
+                                     StrokeThickness="1.5"
+                                     Stroke="{DynamicResource FluentControlStrongStrokeBrush}"
+                                     Fill="{DynamicResource FluentCardBackgroundBrush}"/>
+                            <Ellipse x:Name="Dot" Width="10" Height="10" Visibility="Collapsed"
+                                     Fill="{DynamicResource FluentAccentFillBrush}"/>
+                        </Grid>
+                        <ContentPresenter Margin="10,0,0,0"
+                                          VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                          RecognizesAccessKey="True"/>
+                    </StackPanel>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="Ring" Property="Stroke" Value="{DynamicResource FluentAccentFillBrush}"/>
+                            <Setter TargetName="Dot" Property="Visibility" Value="Visible"/>
+                        </Trigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Ring" Property="Opacity" Value="0.8"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.4"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+</ResourceDictionary>

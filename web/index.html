@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Painter · Web 功能导航</title>
+  <style>
+    :root { color-scheme: light dark; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; min-height: 100vh; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif;
+      background: radial-gradient(1200px 700px at 12% -10%, #3b82f6 0%, transparent 55%),
+                  radial-gradient(1000px 700px at 100% 100%, #8b5cf6 0%, transparent 55%),
+                  #0f1420;
+      color: #eef2ff; display: flex; align-items: center; justify-content: center; padding: 28px 18px;
+    }
+    .wrap { width: 100%; max-width: 860px; }
+    .head { margin-bottom: 26px; }
+    h1 { margin: 0 0 8px; font-size: clamp(26px, 5vw, 38px); letter-spacing: .5px; font-weight: 700; }
+    .sub { margin: 0; opacity: .72; font-size: 14px; line-height: 1.7; }
+    .codebar {
+      display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+      background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.12);
+      border-radius: 14px; padding: 12px 14px; margin: 20px 0 24px; backdrop-filter: blur(8px);
+    }
+    .codebar label { font-size: 13px; opacity: .85; }
+    .codebar input {
+      flex: 1 1 200px; min-width: 140px; padding: 9px 12px; border-radius: 9px;
+      border: 1px solid rgba(255,255,255,.18); background: rgba(0,0,0,.22); color: inherit; outline: none;
+    }
+    .codebar input:focus { border-color: #60a5fa; }
+    .codebar .hint { font-size: 12px; opacity: .55; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+    a.card {
+      display: block; text-decoration: none; color: inherit; padding: 22px;
+      border-radius: 18px; border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06); backdrop-filter: blur(10px);
+      transition: transform .18s ease, border-color .18s ease, background .18s ease;
+    }
+    a.card:hover { transform: translateY(-4px); border-color: rgba(147,197,253,.7); background: rgba(255,255,255,.11); }
+    .ico { font-size: 30px; line-height: 1; margin-bottom: 14px; }
+    .card h2 { margin: 0 0 8px; font-size: 18px; font-weight: 650; }
+    .card p { margin: 0 0 14px; font-size: 13px; line-height: 1.65; opacity: .72; }
+    .path { display: inline-block; font: 12px/1.4 ui-monospace, SFMono-Regular, Consolas, monospace;
+            padding: 4px 9px; border-radius: 7px; background: rgba(96,165,250,.18); color: #bfdbfe; }
+    footer { margin-top: 26px; font-size: 12px; opacity: .5; line-height: 1.7; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="head">
+      <h1>Painter · Web 控制台</h1>
+      <p class="sub">在同一局域网的手机 / 电脑浏览器打开本页面，即可上传图片到大屏、查看并控制电脑屏幕。</p>
+    </div>
+
+    <div class="codebar">
+      <label for="code">访问密码</label>
+      <input id="code" type="password" placeholder="若未设置密码可留空" autocomplete="off" />
+      <span class="hint">填写后会自动附加到下面每个功能的链接</span>
+    </div>
+
+    <div class="grid">
+      <a class="card" data-path="/share" href="/share">
+        <div class="ico">图</div>
+        <h2>图片上传 / 分享</h2>
+        <p>批量上传图片。普通模式：一页一张进入内置白板；PPT 放映模式：直接叠加到当前屏幕，可随时控制每张图片显隐。</p>
+        <span class="path">/share</span>
+      </a>
+      <a class="card" data-path="/remotedesk" href="/remotedesk">
+        <div class="ico">屏</div>
+        <h2>屏幕显示与控制</h2>
+        <p>在浏览器里实时查看电脑屏幕，并用鼠标 / 触屏远程操作，支持多浏览器同时接入与虚拟光标。</p>
+        <span class="path">/remotedesk</span>
+      </a>
+      <a class="card" data-path="/ppt" href="/ppt">
+        <div class="ico">映</div>
+        <h2>PPT 放映控制</h2>
+        <p>放映状态、翻页与画面预览控制台。</p>
+        <span class="path">/ppt</span>
+      </a>
+      <a class="card" data-path="/system" href="/system">
+        <div class="ico">音</div>
+        <h2>系统控制</h2>
+        <p>暂停 / 恢复其它正在播放的媒体，实时调节系统主音量、一键静音。</p>
+        <span class="path">/system</span>
+      </a>
+      <a class="card" data-path="/file" href="/file">
+        <div class="ico">件</div>
+        <h2>局域网文件</h2>
+        <p>上传、下载与管理共享文件夹中的文件。</p>
+        <span class="path">/file</span>
+      </a>
+    </div>
+
+    <footer>
+      若设置了访问密码，请在上方填写；也可以在地址后手动加 <code>?code=你的密码</code>。<br />
+      旧入口 <code>/show</code> 仍保留兼容。
+    </footer>
+  </div>
+
+  <script>
+    (function () {
+      var input = document.getElementById('code');
+      var params = new URLSearchParams(location.search);
+      input.value = params.get('code') || '';
+      function sync() {
+        var code = input.value.trim();
+        document.querySelectorAll('a.card').forEach(function (a) {
+          a.href = a.getAttribute('data-path') + (code ? '?code=' + encodeURIComponent(code) : '');
+        });
+      }
+      input.addEventListener('input', sync);
+      sync();
+    })();
+  </script>
+</body>
+</html>

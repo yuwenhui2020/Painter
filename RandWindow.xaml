@@ -1,0 +1,107 @@
+﻿<Window x:Class="Painter.RandWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:ui="http://schemas.inkore.net/lib/ui/wpf/modern"
+        xmlns:local="clr-namespace:Painter" FontFamily="{DynamicResource AppFontFamily}"
+        ui:ThemeManager.RequestedTheme="Light" Topmost="True" Background="Transparent"
+        mc:Ignorable="d" WindowStyle="None" AllowsTransparency="True" Loaded="Window_Loaded"
+        WindowStartupLocation="CenterScreen"
+        Title="抽奖 WPF by Painter" Height="500" Width="900">
+    <Border Background="#FFF3F3F3" CornerRadius="8" BorderThickness="1" BorderBrush="{DynamicResource FluentCardBorderBrush}" Margin="0">
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="1.8*"/>
+                <ColumnDefinition Width="1*"/>
+            </Grid.ColumnDefinitions>
+            <Viewbox HorizontalAlignment="Center" Margin="20,0">
+                <ui:SimpleStackPanel Orientation="Horizontal" Spacing="50" MinHeight="470">
+                    <Label Name="LabelOutput" FontSize="70" Content="" Background="Transparent" Cursor="Hand"
+                           MouseUp="LabelOutput_MouseUp" ToolTip="点击姓名可重新抽取"
+                           Block.TextAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    <Label Name="LabelOutput2" FontSize="70" Visibility="Collapsed" Content="" Background="Transparent" Cursor="Hand"
+                           MouseUp="LabelOutput_MouseUp" ToolTip="点击姓名可重新抽取"
+                           Block.TextAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    <Label Name="LabelOutput3" FontSize="70" Visibility="Collapsed" Content="" Background="Transparent" Cursor="Hand"
+                           MouseUp="LabelOutput_MouseUp" ToolTip="点击姓名可重新抽取"
+                           Block.TextAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                </ui:SimpleStackPanel>
+            </Viewbox>
+            <ui:SimpleStackPanel Spacing="50" Grid.Column="1" HorizontalAlignment="Left" VerticalAlignment="Center">
+                <StackPanel Orientation="Horizontal">
+                    <Border x:Name="BorderBtnMinus" MouseUp="BorderBtnMinus_MouseUp" Background="{DynamicResource FluentCardBackgroundBrush}" Height="70" Width="70" CornerRadius="8">
+                        <Border.Effect>
+                            <DropShadowEffect Direction="0" ShadowDepth="0" Opacity="0.15" BlurRadius="3"/>
+                        </Border.Effect>
+                        <Viewbox Margin="20">
+                            <local:AppIcon Glyph="Remove" Foreground="{DynamicResource FluentTextPrimaryBrush}"/>
+                        </Viewbox>
+                    </Border>
+                    <Label Name="LabelNumberCount" Content="1" FontFamily="{DynamicResource AppFontFamily}" FontSize="55" Margin="30"/>
+                    <Border x:Name="BorderBtnAdd" MouseUp="BorderBtnAdd_MouseUp" Background="{DynamicResource FluentCardBackgroundBrush}" Height="70" Width="70" CornerRadius="8">
+                        <Border.Effect>
+                            <DropShadowEffect Direction="0" ShadowDepth="0" Opacity="0.15" BlurRadius="3"/>
+                        </Border.Effect>
+                        <Viewbox Margin="20">
+                            <local:AppIcon Glyph="Add" Foreground="{DynamicResource FluentTextPrimaryBrush}"/>
+                        </Viewbox>
+                    </Border>
+                </StackPanel>
+                <Grid>
+                    <Border x:Name="BorderBtnRand" MouseUp="BorderBtnRand_MouseUp" Background="{DynamicResource FluentAccentFillBrush}"
+                        Height="70" Width="200" CornerRadius="8">
+                        <ui:SimpleStackPanel Margin="3,0" Spacing="20" Orientation="Horizontal" HorizontalAlignment="Center">
+                            <Viewbox Margin="0,20">
+                                <local:AppIcon x:Name="SymbolIconStart" Glyph="Contact" Foreground="White"/>
+                            </Viewbox>
+                            <TextBlock Text="抽奖" Foreground="White" FontSize="35" Margin="-1,-1,4,0" VerticalAlignment="Center"/>
+                        </ui:SimpleStackPanel>
+                    </Border>
+                    <Border x:Name="BorderBtnRandCover" MouseUp="BorderBtnRand_MouseUp" Cursor="Hand"
+                        Background="#FF8A8A8A" Visibility="Collapsed" Height="70" Width="200" CornerRadius="8">
+                        <ui:SimpleStackPanel Margin="3,0" Spacing="20" Orientation="Horizontal" HorizontalAlignment="Center">
+                            <Viewbox Margin="0,20">
+                                <local:AppIcon Glyph="{Binding ElementName=SymbolIconStart, Path=Glyph}" Foreground="White"/>
+                            </Viewbox>
+                            <TextBlock x:Name="TextBlockRandAction" Text="停住" Foreground="White" FontSize="35" Margin="-1,-1,4,0" VerticalAlignment="Center"/>
+                        </ui:SimpleStackPanel>
+                    </Border>
+                </Grid>
+            </ui:SimpleStackPanel>
+            <StackPanel Orientation="Horizontal" Grid.Column="1" VerticalAlignment="Bottom" HorizontalAlignment="Right" Margin="10,10,20,10">
+                <Border x:Name="BorderBtnImport" MouseUp="BorderBtnImport_MouseUp"
+                        BorderBrush="#10000000" BorderThickness="1.5" Background="{DynamicResource FluentCardBackgroundBrush}" Height="40" CornerRadius="4">
+                    <ui:SimpleStackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                        <Viewbox Margin="12,12">
+                            <local:AppIcon Glyph="Download" Foreground="{DynamicResource FluentTextPrimaryBrush}"/>
+                        </Viewbox>
+                        <TextBlock Margin="-2,12,14,12" Text="导入名单" FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </ui:SimpleStackPanel>
+                </Border>
+                <Border x:Name="BorderBtnHelp" MouseUp="BorderBtnHelp_MouseUp" Margin="10,0,0,0"
+                        BorderBrush="#10000000" BorderThickness="1.5" Background="{DynamicResource FluentCardBackgroundBrush}" Height="40" CornerRadius="4">
+                    <ui:SimpleStackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                        <Viewbox Margin="15,12">
+                            <local:AppIcon Glyph="People" Foreground="{DynamicResource FluentTextPrimaryBrush}"/>
+                        </Viewbox>
+                        <TextBlock Margin="-5,12,15,12" Name="TextBlockPeopleCount" Text="导入名单后开始" FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </ui:SimpleStackPanel>
+                </Border>
+            </StackPanel>
+            <TextBlock Name="TextBlockRosterInfo" Grid.Column="1" VerticalAlignment="Bottom" HorizontalAlignment="Left"
+                       Margin="15,0,0,18" FontSize="12" Foreground="{DynamicResource FluentTextSecondaryBrush}"/>
+            <Border x:Name="BtnClose" MouseUp="BtnClose_MouseUp"
+                    HorizontalAlignment="Right" VerticalAlignment="{Binding ElementName=BorderBtnHelp, Path=VerticalAlignment}"
+                    Margin="10" Grid.Column="1"
+                    Background="{DynamicResource FluentDangerBrush}" Height="40" Width="40" CornerRadius="4">
+                <Border.Effect>
+                    <DropShadowEffect Direction="0" ShadowDepth="0" Opacity="0.1" BlurRadius="3"/>
+                </Border.Effect>
+                <Viewbox Margin="14">
+                    <local:AppIcon Glyph="Clear" Foreground="White"/>
+                </Viewbox>
+            </Border>
+        </Grid>
+    </Border>
+</Window>

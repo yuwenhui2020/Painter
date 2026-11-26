@@ -1,0 +1,91 @@
+* { box-sizing: border-box; }
+body {
+  margin: 0; padding: 0; font-family: -apple-system, "Microsoft YaHei UI", Arial, sans-serif;
+  background: #0d1117; color: #e8eaed; min-height: 100vh;
+}
+
+header {
+  position: sticky; top: 0; z-index: 5;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 14px; background: #161b22; border-bottom: 1px solid #30363d;
+}
+.title { font-size: 16px; font-weight: 600; }
+.status { font-size: 12px; color: #8b949e; }
+
+.bar {
+  display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+  padding: 10px 12px; border-bottom: 1px solid #21262d;
+}
+.bar button {
+  padding: 9px 12px; border-radius: 9px; border: 1px solid #30363d;
+  background: #21262d; color: #e8eaed; font-size: 13px; cursor: pointer;
+}
+.bar button:active { transform: scale(0.97); }
+.bar button.primary { background: #1f6feb; border-color: #1f6feb; }
+.path {
+  width: 100%; font-size: 12px; color: #8b949e; word-break: break-all;
+  padding-top: 2px;
+}
+.path a { color: #58a6ff; text-decoration: none; margin: 0 1px; }
+.path a:hover { text-decoration: underline; }
+
+.list-wrap { padding: 6px 12px 20px; }
+table.list { width: 100%; border-collapse: collapse; font-size: 14px; }
+table.list th {
+  text-align: left; font-weight: 500; color: #8b949e; font-size: 12px;
+  padding: 8px 6px; border-bottom: 1px solid #30363d;
+}
+table.list td { padding: 10px 6px; border-bottom: 1px solid #21262d; vertical-align: middle; }
+.name { color: #e8eaed; word-break: break-all; }
+.name.dir { color: #58a6ff; font-weight: 600; text-decoration: none; }
+td:nth-child(2) { color: #8b949e; white-space: nowrap; }
+td:nth-child(3) { color: #8b949e; white-space: nowrap; font-size: 12px; }
+.act {
+  display: inline-block; margin-right: 8px; padding: 4px 9px; border-radius: 7px;
+  border: 1px solid #30363d; background: #21262d; color: #58a6ff;
+  font-size: 12px; cursor: pointer; text-decoration: none;
+}
+.act.del { color: #ff7b72; }
+.act:hover { background: #30363d; }
+.empty { text-align: center; color: #8b949e; padding: 30px 0; }
+
+/* 视觉隐藏但可被 .click() 触发的文件输入 */
+.vis-hidden {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); border: 0;
+}
+
+/* 预览模态框 */
+.modal { position: fixed; inset: 0; background: rgba(0,0,0,.72); display: flex; align-items: center; justify-content: center; z-index: 20; }
+.modal.hidden { display: none; }
+.modal-box {
+  width: min(92vw, 900px); max-height: 88vh; display: flex; flex-direction: column;
+  background: #161b22; border: 1px solid #30363d; border-radius: 12px; overflow: hidden;
+}
+.modal-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 14px; border-bottom: 1px solid #30363d; font-size: 14px;
+}
+.modal-head button { background: none; border: none; color: #8b949e; font-size: 18px; cursor: pointer; }
+.modal-body { padding: 12px; overflow: auto; }
+.prev-img { max-width: 100%; display: block; margin: 0 auto; }
+.prev-frame { width: 100%; height: 70vh; border: none; background: #fff; }
+.prev-text {
+  white-space: pre-wrap; word-break: break-word; background: #0d1117;
+  padding: 10px; border-radius: 6px; border: 1px solid #30363d; max-height: 70vh; overflow: auto;
+}
+.err { color: #ff7b72; padding: 10px; border: 1px solid #ff7b72; border-radius: 6px; background: #2d1418; }
+
+/* 拖拽上传浮层 */
+.drop {
+  position: fixed; inset: 0; z-index: 30;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(13,17,23,.78);
+}
+.drop::after {
+  content: "松开鼠标即可上传";
+  font-size: 20px; color: #58a6ff;
+  padding: 40px 60px; border: 3px dashed #58a6ff; border-radius: 16px;
+  background: rgba(31,111,235,.08);
+}
+.drop.hidden { display: none; }

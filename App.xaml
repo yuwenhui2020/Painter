@@ -1,0 +1,47 @@
+﻿<Application x:Class="Painter.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:Painter"
+             xmlns:ui="http://schemas.inkore.net/lib/ui/wpf/modern">
+    <!-- StartupUri 已移除：主窗口改由 App_Startup 显式创建，
+         以便在同一进程内同时拉起托盘/远控模块，并在单实例互唤时控制画板显隐。 -->
+    <Application.Resources>
+        <ResourceDictionary>
+            <Style TargetType="ui:ScrollViewerEx">
+
+                <EventSetter Event="PreviewMouseWheel" Handler="ScrollViewer_PreviewMouseWheel"/>
+
+            </Style>
+
+            <Style TargetType="ui:FontIcon">
+                <Setter Property="FontSize" Value="20"/>
+            </Style>
+            <Style TargetType="ui:SymbolIcon">
+                <Setter Property="FontSize" Value="20"/>
+            </Style>
+
+
+            <ResourceDictionary.MergedDictionaries>
+
+                <ui:ThemeResources RequestedTheme="Light"/>
+
+
+                <ui:XamlControlsResources/>
+
+
+                <ResourceDictionary Source="Resources/SeewoImageDictionary.xaml"/>
+                <ResourceDictionary Source="Resources/DrawShapeImageDictionary.xaml"/>
+                <ResourceDictionary Source="Resources/IconImageDictionary.xaml"/>
+                <ResourceDictionary Source="Resources/Styles/Light.xaml"/>
+
+                <!-- Windows 11 Fluent 控件重绘：必须放在主题字典之后，隐式样式才能覆盖框架默认样式。
+                     它自身只定义“画法”与与主题无关的强调色，颜色键由 Light/Dark 提供。 -->
+                <ResourceDictionary Source="Resources/Styles/Fluent.xaml"/>
+
+                <!-- 自制矢量图标（不依赖任何图标字体），同时提供 local:AppIcon 的隐式模板。 -->
+                <ResourceDictionary Source="Resources/Styles/AppIcons.xaml"/>
+
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>
